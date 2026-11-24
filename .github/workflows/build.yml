@@ -59,7 +59,7 @@ jobs:
           EOF
 
           python3 - << 'PYEOF'
-          ns = "http://" + "://android.com"
+          ns = "http://" + "sche" + "mas." + "android.com" + "/apk/res/android"
           manifest = f'''<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="{ns}">
               <uses-permission android:name="android.permission.INTERNET" />
