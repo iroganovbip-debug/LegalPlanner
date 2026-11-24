@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Планировщик юриста</title>
+<title>Планировщик юриста v1.1</title>
+<script src="https://sheetjs.com"></script>
 <style>
   :root {
     --primary: #1e3a8a;
@@ -20,6 +21,10 @@
     --warn-bg: #fffbeb;
     --ok: #16a34a;
     --ok-bg: #f0fdf4;
+    --court: #7c3aed;
+    --court-bg: #f5f3ff;
+    --wait: #475569;
+    --wait-bg: #f8fafc;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -27,16 +32,16 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
-    padding-bottom: 84px;
+    padding-bottom: 90px;
   }
   header {
     background: var(--primary);
     color: #fff;
-    padding: 14px 16px;
+    padding: 12px 14px;
     position: sticky;
     top: 0;
-    z-index: 20;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    z-index: 25;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.14);
   }
   .header-top {
     display: flex;
@@ -46,37 +51,48 @@
   }
   h1 {
     margin: 0;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ver-tag {
+    font-size: 10px;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 600;
   }
   .header-actions {
     display: flex;
-    gap: 6px;
+    gap: 5px;
   }
   .btn-hdr {
     background: rgba(255,255,255,0.16);
     border: 1px solid rgba(255,255,255,0.28);
     color: #fff;
-    padding: 6px 10px;
+    padding: 6px 9px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
   }
   .stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
     margin-top: 10px;
   }
   .stat-box {
     background: rgba(255,255,255,0.12);
     border-radius: 8px;
-    padding: 6px 4px;
+    padding: 5px 2px;
     text-align: center;
+    cursor: pointer;
   }
-  .stat-num { font-size: 16px; font-weight: 700; display: block; }
-  .stat-lbl { font-size: 10px; opacity: 0.9; }
+  .stat-num { font-size: 15px; font-weight: 700; display: block; }
+  .stat-lbl { font-size: 9px; opacity: 0.92; }
 
   .controls {
     padding: 10px 12px 4px;
@@ -84,22 +100,38 @@
     flex-direction: column;
     gap: 8px;
   }
+  .search-row {
+    display: flex;
+    gap: 6px;
+  }
   .search-input {
-    width: 100%;
-    padding: 10px 12px;
+    flex: 1;
+    padding: 9px 11px;
     border: 1px solid var(--border);
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 13px;
     background: #fff;
+  }
+  .lfo-select {
+    max-width: 145px;
+    padding: 9px 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #fff;
+    color: var(--primary);
   }
   .filters {
     display: flex;
     gap: 6px;
     overflow-x: auto;
     padding-bottom: 4px;
+    scrollbar-width: none;
   }
+  .filters::-webkit-scrollbar { display: none; }
   .chip {
-    padding: 6px 12px;
+    padding: 6px 11px;
     border-radius: 20px;
     border: 1px solid var(--border);
     background: #fff;
@@ -131,14 +163,23 @@
   }
   .card.overdue { border-left-color: var(--danger); background: #fffafa; }
   .card.urgent { border-left-color: var(--warn); }
-  .card.done { border-left-color: var(--ok); opacity: 0.78; }
+  .card.court { border-left-color: var(--court); background: #fcfaff; }
+  .card.unassigned { border-left-color: var(--wait); }
+  .card.done { border-left-color: var(--ok); opacity: 0.76; }
 
   .card-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .badges-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
   }
   .badge-lfo {
     display: inline-block;
@@ -150,6 +191,17 @@
     border-radius: 6px;
     border: 1px solid #bfdbfe;
   }
+  .badge-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .st-court { background: var(--court-bg); color: var(--court); border: 1px solid #ddd6fe; }
+  .st-wait { background: var(--wait-bg); color: var(--wait); border: 1px solid #cbd5e1; }
+  .st-work { background: #eff6ff; color: var(--accent); }
+  .st-done { background: var(--ok-bg); color: var(--ok); }
+
   .badge-days {
     font-size: 11px;
     font-weight: 700;
@@ -160,6 +212,8 @@
   .days-ok { background: var(--ok-bg); color: var(--ok); }
   .days-warn { background: var(--warn-bg); color: var(--warn); }
   .days-over { background: var(--danger-bg); color: var(--danger); }
+  .days-court { background: var(--court-bg); color: var(--court); }
+  .days-wait { background: var(--wait-bg); color: var(--wait); }
 
   .card-title {
     font-size: 15px;
@@ -170,9 +224,23 @@
     font-size: 12px;
     color: var(--muted);
     margin-bottom: 4px;
-    line-height: 1.4;
+    line-height: 1.45;
   }
   .meta-row strong { color: var(--text); }
+  .case-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1f5f9;
+    border: 1px dashed #94a3b8;
+    color: var(--text);
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .case-copy:active { background: #dbeafe; }
+
   .card-desc {
     font-size: 13px;
     color: #334155;
@@ -182,6 +250,57 @@
     margin: 6px 0;
     white-space: pre-wrap;
     line-height: 1.4;
+  }
+  .log-box {
+    background: #f8fafc;
+    border-left: 2px solid #94a3b8;
+    padding: 6px 8px;
+    margin: 6px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 12px;
+  }
+  .log-item {
+    margin-bottom: 3px;
+    color: #334155;
+  }
+  .log-date {
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .att-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0;
+  }
+  .att-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .quick-ext-row {
+    display: flex;
+    gap: 5px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .btn-ext {
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    cursor: pointer;
   }
   .card-footer {
     display: flex;
@@ -200,18 +319,28 @@
     background: var(--accent);
     color: #fff;
     text-decoration: none;
-    padding: 6px 10px;
+    padding: 6px 9px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
+  }
+  .btn-cal {
+    background: #0d9488;
+    color: #fff;
+    border: none;
+    padding: 6px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
   }
   .card-btns {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     margin-left: auto;
   }
   .btn-sm {
-    padding: 6px 9px;
+    padding: 6px 8px;
     border-radius: 8px;
     border: 1px solid var(--border);
     background: #fff;
@@ -242,7 +371,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15,23,42,0.55);
+    background: rgba(15,23,42,0.58);
     z-index: 50;
     align-items: flex-end;
     justify-content: center;
@@ -251,7 +380,7 @@
   .modal {
     background: #fff;
     width: 100%;
-    max-width: 540px;
+    max-width: 560px;
     max-height: 92vh;
     overflow-y: auto;
     border-radius: 18px 18px 0 0;
@@ -262,16 +391,24 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
   }
   .modal-hdr h2 { margin: 0; font-size: 17px; }
   .close-btn {
     background: none;
     border: none;
-    font-size: 22px;
+    font-size: 24px;
     color: var(--muted);
     cursor: pointer;
+    line-height: 1;
   }
   .field { margin-bottom: 10px; }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
   .field label {
     display: block;
     font-size: 12px;
@@ -286,6 +423,7 @@
     border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
+    background: #fff;
   }
   .quick-days {
     display: flex;
@@ -300,462 +438,270 @@
     border-radius: 6px;
     border: 1px solid #bfdbfe;
     background: var(--primary-light);
-    color: var(--primary);
-    cursor: pointer;
-  }
-  .btn-save {
-    width: 100%;
-    padding: 12px;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 700;
-    margin-top: 6px;
-    cursor: pointer;
-  }
-  .empty {
-    text-align: center;
-    color: var(--muted);
-    padding: 36px 16px;
-    font-size: 14px;
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <div class="header-top">
-    <h1>Планировщик юриста</h1>
-    <div class="header-actions">
-      <button class="btn-hdr" onclick="exportCSV()">Excel</button>
-      <button class="btn-hdr" onclick="openBackupModal()">База</button>
-    </div>
-  </div>
-  <div class="stats">
-    <div class="stat-box"><span class="stat-num" id="stTotal">0</span><span class="stat-lbl">Всего</span></div>
-    <div class="stat-box"><span class="stat-num" id="stWork">0</span><span class="stat-lbl">В работе</span></div>
-    <div class="stat-box"><span class="stat-num" id="stUrgent">0</span><span class="stat-lbl">Срочно</span></div>
-    <div class="stat-box"><span class="stat-num" id="stOver">0</span><span class="stat-lbl">Просрочено</span></div>
-  </div>
-</header>
-
-<div class="controls">
-  <input type="text" class="search-input" id="searchInput" placeholder="Поиск по ЛФО, ФИО, номеру дела, задаче..." oninput="render()">
-  <div class="filters" id="filterBar">
-    <button class="chip active" data-f="all" onclick="setFilter('all', this)">Все</button>
-    <button class="chip" data-f="work" onclick="setFilter('work', this)">В работе</button>
-    <button class="chip" data-f="urgent" onclick="setFilter('urgent', this)">Срочные (≤3 дн.)</button>
-    <button class="chip" data-f="overdue" onclick="setFilter('overdue', this)">Просрочено</button>
-    <button class="chip" data-f="done" onclick="setFilter('done', this)">Выполнено</button>
-  </div>
-</div>
-
-<div class="list" id="taskList"></div>
-
-<button class="fab" onclick="openModal()">+ Задача</button>
-
-<!-- Модальное окно задачи -->
-<div class="modal-bg" id="taskModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h2 id="modalTitle">Новая задача</h2>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
-    </div>
-    <input type="hidden" id="taskId">
-    <div class="field">
-      <label>Название ЛФО *</label>
-      <input type="text" id="fLfo" placeholder="Например: ООО «Вектор» / Банк ...">
-    </div>
-    <div class="field">
-      <label>ФИО / Должник / Контрагент *</label>
-      <input type="text" id="fPerson" placeholder="Иванов Иван Иванович">
-    </div>
-    <div class="field">
-      <label>Номер дела / ИП</label>
-      <input type="text" id="fCaseNum" placeholder="А40-12345/2026 или 12345/26/50000-ИП">
-    </div>
-    <div class="field">
-      <label>Ссылка на карточку дела (КАД Арбитр / Суд / ФССП)</label>
-      <input type="url" id="fLink" placeholder="https://kad.arbitr.ru/Card/...">
-    </div>
-    <div class="field">
-      <label>Краткое название задачи *</label>
-      <input type="text" id="fTitle" placeholder="Жалоба на бездействие СПИ / Ходатайство">
-    </div>
-    <div class="field">
-      <label>Категория</label>
-      <select id="fCategory">
-        <option value="Исполнительное производство">Исполнительное производство</option>
-        <option value="Судебная работа">Судебная работа</option>
-        <option value="Банкротство">Банкротство</option>
-        <option value="Договорная / Претензионная">Договорная / Претензионная</option>
-        <option value="Прочее">Прочее</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Подробное описание задачи</label>
-      <textarea id="fDesc" rows="3" placeholder="Суть задачи, дата отправки запроса, что нужно проверить..."></textarea>
-    </div>
-    <div class="field">
-      <label>Крайний срок (Дедлайн) *</label>
-      <input type="date" id="fDeadline">
-      <div class="quick-days">
-        <button type="button" class="q-btn" onclick="addDays(3)">+3 дн.</button>
-        <button type="button" class="q-btn" onclick="addDays(10)">+10 дн.</button>
-        <button type="button" class="q-btn" onclick="addDays(30)">+30 дн.</button>
-        <button type="button" class="q-btn" onclick="addDays(45)">+45 дн. (ФССП)</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Статус</label>
-      <select id="fStatus">
-        <option value="В работе">В работе</option>
-        <option value="Ожидание ответа">Ожидание ответа</option>
-        <option value="Выполнено">Выполнено</option>
-      </select>
-    </div>
-    <button class="btn-save" onclick="saveTask()">Сохранить задачу</button>
-  </div>
-</div>
-
-<!-- Модальное окно базы -->
-<div class="modal-bg" id="backupModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h2>Резервная копия базы</h2>
-      <button class="close-btn" onclick="closeBackupModal()">&times;</button>
-    </div>
-    <p style="font-size:13px; color:#475569; margin-top:0;">Сохраните резервную копию всех дел в папку «Загрузки» или загрузите ранее сохраненный файл JSON.</p>
-    <button class="btn-save" onclick="exportJSON()">Скачать резервную копию (.json)</button>
-    <div class="field" style="margin-top:14px;">
-      <label>Восстановить из файла (.json)</label>
-      <input type="file" id="importFile" accept=".json" onchange="importJSON(event)">
-    </div>
-  </div>
-</div>
-
 <script>
-  const STORAGE_KEY = 'legal_planner_tasks_v1';
-  let currentFilter = 'all';
+const DB_NAME = 'LegalPlannerDB_v1';
+const STORE_NAME = 'cases';
+let db = null;
+let tasks = [];
+let currentFilter = 'all';
+let tempAttachments = [];
 
-  function loadTasks() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try { return JSON.parse(raw); } catch(e) {}
-    }
-    const today = new Date();
-    const d1 = new Date(today); d1.setDate(today.getDate() + 2);
-    const d2 = new Date(today); d2.setDate(today.getDate() + 45);
-    const demo = [
-      {
-        id: '1',
-        lfo: 'ООО «Альфа-Финанс»',
-        person: 'Петров Сергей Викторович',
-        caseNum: 'А40-105420/2026',
-        link: 'https://kad.arbitr.ru',
-        title: 'Подать ходатайство об ознакомлении с материалами дела',
-        category: 'Судебная работа',
-        desc: 'Проверить поступление отзыва ответчика перед предварительным заседанием.',
-        deadline: d1.toISOString().split('T')[0],
-        status: 'В работе'
-      },
-      {
-        id: '2',
-        lfo: 'ПАО «РегионБанк»',
-        person: 'Сидорова Анна Николаевна',
-        caseNum: '45892/26/50012-ИП',
-        link: 'https://fssp.gov.ru',
-        title: 'Контроль ответа ФССП (45 дней) / Жалоба на бездействие',
-        category: 'Исполнительное производство',
-        desc: 'Направлен запрос о ходе ИП и аресте счетов. При отсутствии ответа — подать жалобу в порядке подчиненности.',
-        deadline: d2.toISOString().split('T')[0],
-        status: 'Ожидание ответа'
+// --- Инициализация IndexedDB и автомиграция из v1.0 (localStorage) ---
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains(STORE_NAME)) {
+        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
       }
-    ];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
-    return demo;
-  }
-
-  let tasks = loadTasks();
-
-  function saveToStorage() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  }
-
-  function getDiffDays(dateStr) {
-    if (!dateStr) return 999;
-    const now = new Date();
-    now.setHours(0,0,0,0);
-    const target = new Date(dateStr + 'T00:00:00');
-    return Math.round((target - now) / (1000 * 60 * 60 * 24));
-  }
-
-  function setFilter(f, el) {
-    currentFilter = f;
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
-    render();
-  }
-
-  function render() {
-    const q = document.getElementById('searchInput').value.trim().toLowerCase();
-    const list = document.getElementById('taskList');
-
-    let total = tasks.length, work = 0, urgent = 0, over = 0;
-
-    tasks.forEach(t => {
-      const isDone = t.status === 'Выполнено';
-      const diff = getDiffDays(t.deadline);
-      if (!isDone) {
-        work++;
-        if (diff < 0) over++;
-        else if (diff <= 3) urgent++;
-      }
-    });
-
-    document.getElementById('stTotal').textContent = total;
-    document.getElementById('stWork').textContent = work;
-    document.getElementById('stUrgent').textContent = urgent;
-    document.getElementById('stOver').textContent = over;
-
-    const filtered = tasks.filter(t => {
-      const isDone = t.status === 'Выполнено';
-      const diff = getDiffDays(t.deadline);
-      if (currentFilter === 'work' && isDone) return false;
-      if (currentFilter === 'urgent' && (isDone || diff < 0 || diff > 3)) return false;
-      if (currentFilter === 'overdue' && (isDone || diff >= 0)) return false;
-      if (currentFilter === 'done' && !isDone) return false;
-
-      if (q) {
-        const hay = `${t.lfo} ${t.person} ${t.caseNum} ${t.title} ${t.desc} ${t.category}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    }).sort((a, b) => {
-      const doneA = a.status === 'Выполнено' ? 1 : 0;
-      const doneB = b.status === 'Выполнено' ? 1 : 0;
-      if (doneA !== doneB) return doneA - doneB;
-      return getDiffDays(a.deadline) - getDiffDays(b.deadline);
-    });
-
-    if (filtered.length === 0) {
-      list.innerHTML = '<div class="empty">Задачи не найдены. Нажмите «+ Задача», чтобы добавить новое дело.</div>';
-      return;
-    }
-
-    list.innerHTML = filtered.map(t => {
-      const isDone = t.status === 'Выполнено';
-      const diff = getDiffDays(t.deadline);
-      let cardCls = 'card';
-      let badgeCls = 'badge-days days-ok';
-      let badgeTxt = `Осталось: ${diff} дн.`;
-
-      if (isDone) {
-        cardCls += ' done';
-        badgeTxt = 'Выполнено';
-      } else if (diff < 0) {
-        cardCls += ' overdue';
-        badgeCls = 'badge-days days-over';
-        badgeTxt = `Просрочено на ${Math.abs(diff)} дн.`;
-      } else if (diff === 0) {
-        cardCls += ' overdue';
-        badgeCls = 'badge-days days-over';
-        badgeTxt = 'Срок сегодня!';
-      } else if (diff <= 3) {
-        cardCls += ' urgent';
-        badgeCls = 'badge-days days-warn';
-        badgeTxt = `Срочно: ${diff} дн.`;
-      }
-
-      const linkBtn = t.link ? `<a class="btn-link" href="${escapeHtml(t.link)}" target="_blank">Открыть дело</a>` : '';
-
-      return `
-        <div class="${cardCls}">
-          <div class="card-top">
-            <span class="badge-lfo">ЛФО: ${escapeHtml(t.lfo || 'Не указано')}</span>
-            <span class="${badgeCls}">${badgeTxt}</span>
-          </div>
-          <div class="card-title">${escapeHtml(t.title)}</div>
-          <div class="meta-row"><strong>ФИО / Сторона:</strong> ${escapeHtml(t.person || '—')}</div>
-          <div class="meta-row"><strong>Дело / ИП:</strong> ${escapeHtml(t.caseNum || '—')} &bull; <strong>Срок:</strong> ${formatDate(t.deadline)}</div>
-          <div class="meta-row"><strong>Категория:</strong> ${escapeHtml(t.category)} &bull; <strong>Статус:</strong> ${escapeHtml(t.status)}</div>
-          ${t.desc ? `<div class="card-desc">${escapeHtml(t.desc)}</div>` : ''}
-          <div class="card-footer">
-            ${linkBtn}
-            <div class="card-btns">
-              ${!isDone ? `<button class="btn-sm btn-done" onclick="markDone('${t.id}')">Готово</button>` : ''}
-              <button class="btn-sm" onclick="editTask('${t.id}')">Изм.</button>
-              <button class="btn-sm btn-del" onclick="deleteTask('${t.id}')">Удал.</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function escapeHtml(str) {
-    return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  }
-
-  function formatDate(d) {
-    if (!d) return '—';
-    const p = d.split('-');
-    return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : d;
-  }
-
-  function openModal() {
-    document.getElementById('modalTitle').textContent = 'Новая задача';
-    document.getElementById('taskId').value = '';
-    document.getElementById('fLfo').value = '';
-    document.getElementById('fPerson').value = '';
-    document.getElementById('fCaseNum').value = '';
-    document.getElementById('fLink').value = '';
-    document.getElementById('fTitle').value = '';
-    document.getElementById('fCategory').value = 'Исполнительное производство';
-    document.getElementById('fDesc').value = '';
-    const d = new Date(); d.setDate(d.getDate() + 7);
-    document.getElementById('fDeadline').value = d.toISOString().split('T')[0];
-    document.getElementById('fStatus').value = 'В работе';
-    document.getElementById('taskModal').classList.add('open');
-  }
-
-  function closeModal() {
-    document.getElementById('taskModal').classList.remove('open');
-  }
-
-  function addDays(n) {
-    const d = new Date();
-    d.setDate(d.getDate() + n);
-    document.getElementById('fDeadline').value = d.toISOString().split('T')[0];
-  }
-
-  function saveTask() {
-    const id = document.getElementById('taskId').value;
-    const lfo = document.getElementById('fLfo').value.trim();
-    const person = document.getElementById('fPerson').value.trim();
-    const caseNum = document.getElementById('fCaseNum').value.trim();
-    const link = document.getElementById('fLink').value.trim();
-    const title = document.getElementById('fTitle').value.trim();
-    const category = document.getElementById('fCategory').value;
-    const desc = document.getElementById('fDesc').value.trim();
-    const deadline = document.getElementById('fDeadline').value;
-    const status = document.getElementById('fStatus').value;
-
-    if (!title || !deadline) {
-      alert('Укажите название задачи и крайний срок.');
-      return;
-    }
-
-    const obj = {
-      id: id || String(Date.now()),
-      lfo, person, caseNum, link, title, category, desc, deadline, status
     };
+    req.onsuccess = async (e) => {
+      db = e.target.result;
+      await migrateFromLocalStorage();
+      await loadAllTasks();
+      resolve();
+    };
+    req.onerror = (e) => reject(e);
+  });
+}
 
-    if (id) {
-      const idx = tasks.findIndex(x => x.id === id);
-      if (idx !== -1) tasks[idx] = obj;
-    } else {
-      tasks.push(obj);
-    }
-
-    saveToStorage();
-    closeModal();
-    render();
-  }
-
-  function editTask(id) {
-    const t = tasks.find(x => x.id === id);
-    if (!t) return;
-    document.getElementById('modalTitle').textContent = 'Редактировать задачу';
-    document.getElementById('taskId').value = t.id;
-    document.getElementById('fLfo').value = t.lfo || '';
-    document.getElementById('fPerson').value = t.person || '';
-    document.getElementById('fCaseNum').value = t.caseNum || '';
-    document.getElementById('fLink').value = t.link || '';
-    document.getElementById('fTitle').value = t.title || '';
-    document.getElementById('fCategory').value = t.category || 'Исполнительное производство';
-    document.getElementById('fDesc').value = t.desc || '';
-    document.getElementById('fDeadline').value = t.deadline || '';
-    document.getElementById('fStatus').value = t.status || 'В работе';
-    document.getElementById('taskModal').classList.add('open');
-  }
-
-  function markDone(id) {
-    const t = tasks.find(x => x.id === id);
-    if (t) {
-      t.status = 'Выполнено';
-      saveToStorage();
-      render();
-    }
-  }
-
-  function deleteTask(id) {
-    if (confirm('Удалить эту задачу?')) {
-      tasks = tasks.filter(x => x.id !== id);
-      saveToStorage();
-      render();
-    }
-  }
-
-  function triggerDownload(filename, content, mime) {
-    if (window.AndroidBridge && window.AndroidBridge.saveTextFile) {
-      window.AndroidBridge.saveTextFile(filename, content, mime);
-    } else {
-      const blob = new Blob([content], { type: mime });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  }
-
-  function exportCSV() {
-    const headers = ['Название ЛФО', 'ФИО / Сторона', 'Номер дела', 'Категория', 'Задача', 'Описание', 'Крайний срок', 'Статус', 'Ссылка'];
-    const rows = tasks.map(t => [
-      t.lfo, t.person, t.caseNum, t.category, t.title, t.desc, t.deadline, t.status, t.link
-    ].map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(';'));
-    const csv = '\uFEFF' + headers.join(';') + '\n' + rows.join('\n');
-    const dateTag = new Date().toISOString().split('T')[0];
-    triggerDownload(`Planirovshchik_yurista_${dateTag}.csv`, csv, 'text/csv;charset=utf-8');
-  }
-
-  function openBackupModal() { document.getElementById('backupModal').classList.add('open'); }
-  function closeBackupModal() { document.getElementById('backupModal').classList.remove('open'); }
-
-  function exportJSON() {
-    const dateTag = new Date().toISOString().split('T')[0];
-    triggerDownload(`LegalPlanner_backup_${dateTag}.json`, JSON.stringify(tasks, null, 2), 'application/json');
-    closeBackupModal();
-  }
-
-  function importJSON(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      try {
-        const data = JSON.parse(evt.target.result);
-        if (Array.isArray(data)) {
-          tasks = data;
-          saveToStorage();
-          render();
-          closeBackupModal();
-          alert('База успешно восстановлена!');
+async function migrateFromLocalStorage() {
+  try {
+    const legacyKeys = ['legal_tasks_v1', 'lawyer_tasks', 'tasks'];
+    for (const key of legacyKeys) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          for (const item of parsed) {
+            const migrated = {
+              id: item.id || ('m_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+              status: item.done ? 'done' : (item.status || 'work'),
+              category: item.category || 'ИП / ФССП',
+              lfo: item.lfo || 'Без ЛФО',
+              caseNum: item.caseNum || item.number || '',
+              debtor: item.debtor || item.title || 'Без названия',
+              organ: item.organ || item.court || '',
+              deadline: item.deadline || item.date || '',
+              courtTime: item.courtTime || '10:00',
+              desc: item.desc || item.description || '',
+              link: item.link || item.url || '',
+              logs: item.logs || [],
+              attachments: item.attachments || [],
+              createdAt: item.createdAt || Date.now()
+            };
+            await dbPut(migrated);
+          }
+          localStorage.removeItem(key);
+          showToast('Перенесено дел из v1.0: ' + parsed.length);
         }
-      } catch(err) {
-        alert('Ошибка чтения файла резервной копии.');
       }
+    }
+  } catch (err) {
+    console.error('Migration error:', err);
+  }
+}
+
+function dbPut(item) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(item);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e);
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e);
+  });
+}
+
+function loadAllTasks() {
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => {
+      tasks = req.result || [];
+      updateLfoLists();
+      render();
+      checkMorningNotifications();
+      resolve();
     };
-    reader.readAsText(file);
+  });
+}
+
+// --- Уведомления в шторку Android ---
+function checkMorningNotifications() {
+  if (!window.AndroidBridge || !window.AndroidBridge.showNotification) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem('last_notif_date') === todayStr) return;
+
+  let todayCount = 0;
+  let overCount = 0;
+  let courtToday = [];
+
+  tasks.forEach(t => {
+    if (t.status === 'done' || t.status === 'unassigned' || !t.deadline) return;
+    const diff = getDaysDiff(t.deadline);
+    if (diff < 0) overCount++;
+    if (diff === 0) {
+      todayCount++;
+      if (t.status === 'court') {
+        courtToday.push(`${t.courtTime || ''} ${t.debtor}`.trim());
+      }
+    }
+  });
+
+  if (todayCount > 0 || overCount > 0) {
+    let msgParts = [];
+    if (courtToday.length > 0) msgParts.push('Суд сегодня: ' + courtToday.join(', '));
+    if (todayCount > 0) msgParts.push(`Дедлайнов сегодня: ${todayCount}`);
+    if (overCount > 0) msgParts.push(`Просрочено дел: ${overCount}`);
+    window.AndroidBridge.showNotification('Планировщик юриста: сводка дня', msgParts.join(' | '), 1001);
+    localStorage.setItem('last_notif_date', todayStr);
+  }
+}
+
+// --- Расчет дней ---
+function getDaysDiff(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + 'T00:00:00');
+  return Math.round((target - today) / (1000 * 60 * 60 * 24));
+}
+
+function formatDateRu(dateStr) {
+  if (!dateStr) return 'не указана';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+// --- Обновление списка ЛФО ---
+function updateLfoLists() {
+  const lfos = [...new Set(tasks.map(t => (t.lfo || '').trim()).filter(Boolean))].sort();
+  const sel = document.getElementById('lfoFilter');
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="all">Все ЛФО (' + lfos.length + ')</option>' +
+    lfos.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+  if (lfos.includes(currentVal)) sel.value = currentVal;
+
+  const dl = document.getElementById('lfoSuggestions');
+  dl.innerHTML = lfos.map(l => `<option value="${escapeHtml(l)}">`).join('');
+}
+
+// --- Фильтры и рендер ---
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  render();
+}
+
+function quickTab(f) {
+  const btn = document.querySelector(`.chip[data-f="${f}"]`);
+  setFilter(f, btn);
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const lfoVal = document.getElementById('lfoFilter').value;
+
+  let cntTotal = 0, cntCourt = 0, cntWait = 0, cntUrgent = 0, cntOver = 0;
+
+  tasks.forEach(t => {
+    if (t.status !== 'done') {
+      cntTotal++;
+      if (t.status === 'court') cntCourt++;
+      if (t.status === 'unassigned') cntWait++;
+      if (t.status !== 'unassigned' && t.deadline) {
+        const d = getDaysDiff(t.deadline);
+        if (d < 0) cntOver++;
+        else if (d <= 3) cntUrgent++;
+      }
+    }
+  });
+
+  document.getElementById('stTotal').textContent = cntTotal;
+  document.getElementById('stCourt').textContent = cntCourt;
+  document.getElementById('stWait').textContent = cntWait;
+  document.getElementById('stUrgent').textContent = cntUrgent;
+  document.getElementById('stOver').textContent = cntOver;
+
+  let filtered = tasks.filter(t => {
+    if (lfoVal !== 'all' && (t.lfo || '').trim() !== lfoVal) return false;
+    if (q) {
+      const hay = `${t.lfo} ${t.debtor} ${t.caseNum} ${t.organ} ${t.desc} ${t.category}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    const diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
+    if (currentFilter === 'all') return t.status !== 'done';
+    if (currentFilter === 'court') return t.status === 'court';
+    if (currentFilter === 'unassigned') return t.status === 'unassigned';
+    if (currentFilter === 'urgent') return t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff >= 0 && diff <= 3;
+    if (currentFilter === 'overdue') return t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff < 0;
+    if (currentFilter === 'done') return t.status === 'done';
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (a.status === 'done' && b.status !== 'done') return 1;
+    if (b.status === 'done' && a.status !== 'done') return -1;
+    const da = (a.status !== 'unassigned' && a.deadline) ? getDaysDiff(a.deadline) : 9999;
+    const dbVal = (b.status !== 'unassigned' && b.deadline) ? getDaysDiff(b.deadline) : 9999;
+    return da - dbVal;
+  });
+
+  const container = document.getElementById('taskList');
+  if (!container) return;
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty">По выбранному фильтру дел нет.<br>Нажмите «+ Новое дело» или загрузите Excel-реестр.</div>';
+    return;
   }
 
-  render();
-</script>
-</body>
-</html>
+  container.innerHTML = filtered.map(t => {
+    const diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
+    let cardClass = 'card';
+    let daysBadge = '';
+    let statusBadge = '';
+
+    if (t.status === 'done') {
+      cardClass += ' done';
+      statusBadge = '<span class="badge-status st-done">✅ Завершено</span>';
+    } else if (t.status === 'court') {
+      cardClass += ' court';
+      statusBadge = `<span class="badge-status st-court">⚖️ Суд ${t.courtTime || ''}</span>`;
+    } else if (t.status === 'unassigned') {
+      cardClass += ' unassigned';
+      statusBadge = '<span class="badge-status st-wait">⏳ Не назначено</span>';
+      daysBadge = '<span class="badge-days days-wait">Ожидает дату суда</span>';
+    } else {
+      statusBadge = `<span class="badge-status st-work">${escapeHtml(t.category || 'В работе')}</span>`;
+    }
+
+    if (t.status !== 'done' && t.status !== 'unassigned' && diff !== null) {
+      if (diff < 0) {
+        cardClass += ' overdue';
+        daysBadge = `<span class="badge-days days-over">Просрочено ${Math.abs(diff)} дн.</span>`;
+      } else if (diff === 0) {
+        cardClass += ' urgent';
+        daysBadge = `<span class="badge-days days-warn">СЕГОДНЯ (${formatDateRu(t.deadline)})</span>`;
+      } else if (diff <= 3) {
+        cardClass += ' urgent';
+        daysBadge = `<span class="badge-days days-warn">Осталось ${diff} дн.</span>`;
+      } else {
+        const cls = t.status === 'court' ? 'days-court' : 'days-ok';
+        daysBadge = `<span class="badge-days ${cls}">Через ${diff} дн. (${formatDateRu(t.deadline)})</span>`;
+      }
+    }
+
+    const caseHtml = t.caseNum
+      ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')" title="Нажмите, чтобы скопировать">📋 ${escapeHtml(t.caseNum)}</span>`
+      : '';
+
+    const logsHtml = (t.logs && t.logs.length > 0)
