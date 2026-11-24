@@ -20,7 +20,7 @@ jobs:
 
       - name: Prepare Android Project
         run: |
-          mkdir -p app/src/main/java/com/lawyer/planner app/src/main/assets app/src/main/res/drawable
+          mkdir -p app/src/main/java/com/lawyer/planner app/src/main/assets app/src/main/res/drawable app/src/main/res/xml
           mv MainActivity.java app/src/main/java/com/lawyer/planner/MainActivity.java
           mv index.html app/src/main/assets/index.html
 
@@ -49,13 +49,16 @@ jobs:
                   applicationId "com.lawyer.planner"
                   minSdk 24
                   targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
+                  versionCode 2
+                  versionName "1.1"
               }
               buildTypes { release { minifyEnabled false } }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
-          dependencies { implementation 'androidx.appcompat:appcompat:1.6.1' }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'androidx.core:core:1.12.0'
+          }
           EOF
 
           python3 - << 'PYEOF'
@@ -63,16 +66,40 @@ jobs:
           manifest = f'''<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="{ns}">
               <uses-permission android:name="android.permission.INTERNET" />
-              <application android:label="Планировщик юриста" android:icon="@drawable/ic_launcher" android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+              <uses-feature android:name="android.hardware.camera" android:required="false" />
+              <application
+                  android:label="Планировщик юриста"
+                  android:icon="@drawable/ic_launcher"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+                  android:largeHeap="true">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
                   </activity>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="com.lawyer.planner.fileprovider"
+                      android:exported="false"
+                      android:grantUriPermissions="true">
+                      <meta-data
+                          android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/file_paths" />
+                  </provider>
               </application>
           </manifest>'''
           open("app/src/main/AndroidManifest.xml", "w").write(manifest)
+
+          file_paths = f'''<?xml version="1.0" encoding="utf-8"?>
+          <paths xmlns:android="{ns}">
+              <cache-path name="shared_docs" path="docs/" />
+              <external-cache-path name="camera_photos" path="." />
+          </paths>'''
+          open("app/src/main/res/xml/file_paths.xml", "w").write(file_paths)
 
           icon = f'''<vector xmlns:android="{ns}" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
               <path android:fillColor="#1E3A8A" android:pathData="M0,0h108v108h-108z"/>
@@ -92,5 +119,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: LegalPlanner-APK
+          name: LegalPlanner-v1.1-APK
           path: app/build/outputs/apk/debug/app-debug.apk
