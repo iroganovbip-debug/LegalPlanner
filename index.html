@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Планировщик юриста v1.1</title>
-<script src="https://sheetjs.com"></script>
 <style>
   :root {
     --primary: #1e3a8a;
@@ -64,10 +63,7 @@
     border-radius: 6px;
     font-weight: 600;
   }
-  .header-actions {
-    display: flex;
-    gap: 5px;
-  }
+  .header-actions { display: flex; gap: 5px; }
   .btn-hdr {
     background: rgba(255,255,255,0.16);
     border: 1px solid rgba(255,255,255,0.28);
@@ -93,17 +89,13 @@
   }
   .stat-num { font-size: 15px; font-weight: 700; display: block; }
   .stat-lbl { font-size: 9px; opacity: 0.92; }
-
   .controls {
     padding: 10px 12px 4px;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-  .search-row {
-    display: flex;
-    gap: 6px;
-  }
+  .search-row { display: flex; gap: 6px; }
   .search-input {
     flex: 1;
     padding: 9px 11px;
@@ -146,7 +138,6 @@
     color: #fff;
     border-color: var(--primary);
   }
-
   .list {
     padding: 8px 12px;
     display: flex;
@@ -166,7 +157,6 @@
   .card.court { border-left-color: var(--court); background: #fcfaff; }
   .card.unassigned { border-left-color: var(--wait); }
   .card.done { border-left-color: var(--ok); opacity: 0.76; }
-
   .card-top {
     display: flex;
     justify-content: space-between;
@@ -175,12 +165,7 @@
     margin-bottom: 6px;
     flex-wrap: wrap;
   }
-  .badges-left {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    align-items: center;
-  }
+  .badges-left { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
   .badge-lfo {
     display: inline-block;
     background: var(--primary-light);
@@ -191,41 +176,19 @@
     border-radius: 6px;
     border: 1px solid #bfdbfe;
   }
-  .badge-status {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
-  }
+  .badge-status { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
   .st-court { background: var(--court-bg); color: var(--court); border: 1px solid #ddd6fe; }
   .st-wait { background: var(--wait-bg); color: var(--wait); border: 1px solid #cbd5e1; }
   .st-work { background: #eff6ff; color: var(--accent); }
   .st-done { background: var(--ok-bg); color: var(--ok); }
-
-  .badge-days {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
-    white-space: nowrap;
-  }
+  .badge-days { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
   .days-ok { background: var(--ok-bg); color: var(--ok); }
   .days-warn { background: var(--warn-bg); color: var(--warn); }
   .days-over { background: var(--danger-bg); color: var(--danger); }
   .days-court { background: var(--court-bg); color: var(--court); }
   .days-wait { background: var(--wait-bg); color: var(--wait); }
-
-  .card-title {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 4px 0;
-  }
-  .meta-row {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 4px;
-    line-height: 1.45;
-  }
+  .card-title { font-size: 15px; font-weight: 700; margin: 4px 0; }
+  .meta-row { font-size: 12px; color: var(--muted); margin-bottom: 4px; line-height: 1.45; }
   .meta-row strong { color: var(--text); }
   .case-copy {
     display: inline-flex;
@@ -239,8 +202,6 @@
     border-radius: 5px;
     cursor: pointer;
   }
-  .case-copy:active { background: #dbeafe; }
-
   .card-desc {
     font-size: 13px;
     color: #334155;
@@ -259,20 +220,9 @@
     border-radius: 0 8px 8px 0;
     font-size: 12px;
   }
-  .log-item {
-    margin-bottom: 3px;
-    color: #334155;
-  }
-  .log-date {
-    font-weight: 700;
-    color: var(--primary);
-  }
-  .att-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 6px 0;
-  }
+  .log-item { margin-bottom: 3px; color: #334155; }
+  .log-date { font-weight: 700; color: var(--primary); }
+  .att-strip { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
   .att-chip {
     display: inline-flex;
     align-items: center;
@@ -286,12 +236,7 @@
     border-radius: 7px;
     cursor: pointer;
   }
-  .quick-ext-row {
-    display: flex;
-    gap: 5px;
-    margin-top: 6px;
-    flex-wrap: wrap;
-  }
+  .quick-ext-row { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
   .btn-ext {
     padding: 4px 8px;
     font-size: 11px;
@@ -334,11 +279,7 @@
     font-weight: 600;
     cursor: pointer;
   }
-  .card-btns {
-    display: flex;
-    gap: 5px;
-    margin-left: auto;
-  }
+  .card-btns { display: flex; gap: 5px; margin-left: auto; }
   .btn-sm {
     padding: 6px 8px;
     border-radius: 8px;
@@ -350,7 +291,6 @@
   }
   .btn-done { color: var(--ok); border-color: #bbf7d0; background: var(--ok-bg); }
   .btn-del { color: var(--danger); border-color: #fecaca; background: var(--danger-bg); }
-
   .fab {
     position: fixed;
     right: 16px;
@@ -366,7 +306,6 @@
     cursor: pointer;
     z-index: 30;
   }
-
   .modal-bg {
     display: none;
     position: fixed;
@@ -395,27 +334,10 @@
     padding-bottom: 8px;
   }
   .modal-hdr h2 { margin: 0; font-size: 17px; }
-  .close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: var(--muted);
-    cursor: pointer;
-    line-height: 1;
-  }
+  .close-btn { background: none; border: none; font-size: 24px; color: var(--muted); cursor: pointer; line-height: 1; }
   .field { margin-bottom: 10px; }
-  .field-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .field label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
   .field input, .field select, .field textarea {
     width: 100%;
     padding: 9px 10px;
@@ -425,12 +347,7 @@
     font-family: inherit;
     background: #fff;
   }
-  .quick-days {
-    display: flex;
-    gap: 6px;
-    margin-top: 6px;
-    flex-wrap: wrap;
-  }
+  .quick-days { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
   .q-btn {
     padding: 5px 9px;
     font-size: 11px;
@@ -438,6 +355,230 @@
     border-radius: 6px;
     border: 1px solid #bfdbfe;
     background: var(--primary-light);
+    color: var(--primary);
+    cursor: pointer;
+  }
+  .btn-save {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 6px;
+    cursor: pointer;
+  }
+  .btn-sec {
+    width: 100%;
+    padding: 10px;
+    background: #f1f5f9;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>Планировщик юриста <span class="ver-tag">v1.1</span></h1>
+    <div class="header-actions">
+      <button class="btn-hdr" onclick="openToolsModal()">📊 Excel / Календарь</button>
+      <button class="btn-hdr" onclick="openBackupModal()">💾 База</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat-box" onclick="quickTab('all')"><span class="stat-num" id="stTotal">0</span><span class="stat-lbl">Всего</span></div>
+    <div class="stat-box" onclick="quickTab('court')"><span class="stat-num" id="stCourt">0</span><span class="stat-lbl">Суд</span></div>
+    <div class="stat-box" onclick="quickTab('unassigned')"><span class="stat-num" id="stWait">0</span><span class="stat-lbl">Не назн.</span></div>
+    <div class="stat-box" onclick="quickTab('urgent')"><span class="stat-num" id="stUrgent">0</span><span class="stat-lbl">Срочно</span></div>
+    <div class="stat-box" onclick="quickTab('overdue')"><span class="stat-num" id="stOver">0</span><span class="stat-lbl">Просроч.</span></div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="search-row">
+    <input type="text" class="search-input" id="searchInput" placeholder="Поиск по ФИО, № дела, ЛФО, задаче..." oninput="render()">
+    <select class="lfo-select" id="lfoFilter" onchange="render()">
+      <option value="all">Все ЛФО</option>
+    </select>
+  </div>
+  <div class="filters" id="filterBar">
+    <button class="chip active" data-f="all" onclick="setFilter('all', this)">Все активные</button>
+    <button class="chip" data-f="court" onclick="setFilter('court', this)">⚖️ Суд заседание</button>
+    <button class="chip" data-f="unassigned" onclick="setFilter('unassigned', this)">⏳ Не назначено</button>
+    <button class="chip" data-f="urgent" onclick="setFilter('urgent', this)">🔥 Срочно (≤3 дн.)</button>
+    <button class="chip" data-f="overdue" onclick="setFilter('overdue', this)">🚨 Просрочено</button>
+    <button class="chip" data-f="done" onclick="setFilter('done', this)">✅ Завершено</button>
+  </div>
+</div>
+
+<div class="list" id="taskList"></div>
+
+<button class="fab" onclick="openTaskModal()">+ Новое дело</button>
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="taskModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2 id="modalTitle">Новая задача / дело</h2>
+      <button class="close-btn" onclick="closeModal('taskModal')">&times;</button>
+    </div>
+    <input type="hidden" id="editId">
+
+    <div class="field-row">
+      <div class="field">
+        <label>Статус дела</label>
+        <select id="fStatus" onchange="toggleStatusFields()">
+          <option value="work">В работе (контроль срока)</option>
+          <option value="court">Суд заседание (назначено)</option>
+          <option value="unassigned">Не назначено (ожидает дату)</option>
+          <option value="done">Завершено</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Категория</label>
+        <select id="fCategory">
+          <option value="ИП / ФССП">ИП / ФССП</option>
+          <option value="Суд (Иск / Приказ)">Суд (Иск / Приказ)</option>
+          <option value="Банкротство">Банкротство</option>
+          <option value="Жалоба / Ходатайство">Жалоба / Ходатайство</option>
+          <option value="Прочее">Прочее</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>ЛФО / Взыскатель *</label>
+        <input type="text" id="fLfo" list="lfoSuggestions" placeholder="Напр. ООО ПКО Вектор">
+        <datalist id="lfoSuggestions"></datalist>
+      </div>
+      <div class="field">
+        <label>Номер дела / ИП</label>
+        <input type="text" id="fCaseNum" placeholder="2-145/2026 или 12345/26/50-ИП">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Должник (ФИО / Организация) *</label>
+      <input type="text" id="fDebtor" placeholder="Иванов Иван Иванович">
+    </div>
+
+    <div class="field">
+      <label>Суд / Отдел ФССП / Инстанция</label>
+      <input type="text" id="fOrgan" placeholder="Сергиево-Посадский городской суд / ОСП">
+    </div>
+
+    <div id="deadlineBlock">
+      <div class="field-row">
+        <div class="field">
+          <label id="lblDate">Контрольный срок (дедлайн)</label>
+          <input type="date" id="fDeadline">
+        </div>
+        <div class="field" id="courtTimeField" style="display:none;">
+          <label>Время заседания</label>
+          <input type="time" id="fCourtTime" value="10:00">
+        </div>
+      </div>
+      <div class="quick-days">
+        <button type="button" class="q-btn" onclick="addDaysToInput(3)">+3 дн.</button>
+        <button type="button" class="q-btn" onclick="addDaysToInput(10)">+10 дн. (обжал.)</button>
+        <button type="button" class="q-btn" onclick="addDaysToInput(30)">+30 дн.</button>
+        <button type="button" class="q-btn" onclick="addDaysToInput(45)">+45 дн. (ФССП)</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Суть задачи / примечание</label>
+      <textarea id="fDesc" rows="3" placeholder="Что нужно сделать, реквизиты, кабинет судьи..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Ссылка на карточку дела (КАД / ГАС Правосудие / ФССП)</label>
+      <input type="url" id="fLink" placeholder="https://...">
+    </div>
+
+    <div class="field">
+      <label>📎 Документы и фото (PDF, сканы, фото с камеры)</label>
+      <input type="file" id="fFiles" accept="application/pdf,image/*" multiple onchange="handleFileAttach(event)">
+      <div class="att-edit-list" id="attEditList"></div>
+    </div>
+
+    <button class="btn-save" onclick="saveTask()">💾 Сохранить дело</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="logModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>Хронология по делу</h2>
+      <button class="close-btn" onclick="closeModal('logModal')">&times;</button>
+    </div>
+    <input type="hidden" id="logTaskId">
+    <div class="field">
+      <label>Новая запись в ход дела (дата добавится автоматически)</label>
+      <textarea id="logText" rows="2" placeholder="Напр.: Подано ходатайство через Госуслуги, ждем ответ 45 дней"></textarea>
+    </div>
+    <div class="quick-days" style="margin-bottom:10px;">
+      <button type="button" class="q-btn" onclick="setLogTemplate('Подан запрос приставу (контроль +45 дн.)', 45)">Запрос ФССП (+45 дн.)</button>
+      <button type="button" class="q-btn" onclick="setLogTemplate('Подано заявление/иск в суд (ожидаем назначение)', 0)">Подано в суд</button>
+      <button type="button" class="q-btn" onclick="setLogTemplate('Заседание отложено (+30 дн.)', 30)">Отложено (+30 дн.)</button>
+    </div>
+    <button class="btn-save" onclick="addLogEntry()">+ Добавить запись</button>
+    <div id="logHistoryView" style="margin-top:14px;"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="toolsModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>Excel и Google Календарь</h2>
+      <button class="close-btn" onclick="closeModal('toolsModal')">&times;</button>
+    </div>
+    <h3 style="font-size:14px; margin:0 0 6px;">📥 Импорт реестра из Excel / CSV</h3>
+    <p style="font-size:12px; color:var(--muted); margin:0 0 8px;">
+      Загрузите файл <b>.xlsx, .xls или .csv</b>. Дубликаты по «Номеру дела / ИП» пропускаются автоматически.
+    </p>
+    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importExcelFile(event)">
+    <button class="btn-save" style="background:#16a34a;" onclick="document.getElementById('excelFileInput').click()">📂 Выбрать файл Excel / CSV</button>
+    <button class="btn-sec" onclick="downloadExcelTemplate()">📄 Скачать шаблон Excel (.xlsx)</button>
+    <button class="btn-sec" onclick="exportExcelFull()">📤 Выгрузить всю базу в Excel (.xlsx)</button>
+
+    <hr style="border:none; border-top:1px solid var(--border); margin:14px 0;">
+
+    <h3 style="font-size:14px; margin:0 0 6px;">📅 Синхронизация с Календарем</h3>
+    <p style="font-size:12px; color:var(--muted); margin:0 0 8px;">
+      Выгрузите все активные дедлайны и судебные заседания в единый файл расписания <b>.ics</b>.
+    </p>
+    <button class="btn-save" style="background:#0d9488;" onclick="exportICS()">📅 Скачать расписание для Календаря (.ics)</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="backupModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>Резервное копирование базы</h2>
+      <button class="close-btn" onclick="closeModal('backupModal')">&times;</button>
+    </div>
+    <p style="font-size:12px; color:var(--muted); margin-top:0;">
+      Все дела и документы хранятся в локальной базе <b>IndexedDB</b> на вашем устройстве.
+    </p>
+    <button class="btn-save" onclick="exportBackup(false)">⚡ Быстрый бэкап (только дела и ссылки, .json)</button>
+    <button class="btn-save" style="background:#7c3aed;" onclick="exportBackup(true)">📦 Полный архив (дела + все PDF и фото, .json)</button>
+
+    <hr style="border:none; border-top:1px solid var(--border); margin:14px 0;">
+
+    <label style="font-size:12px; font-weight:700; display:block; margin-bottom:6px;">Восстановить из файла резервной копии (.json):</label>
+    <input type="file" id="restoreFileInput" accept=".json,application/json" style="display:none" onchange="importBackup(event)">
+    <button class="btn-sec" onclick="document.getElementById('restoreFileInput').click()">♻️ Загрузить резервную копию</button>
+  </div>
+</div>
+
+<div class="img-viewer" id="imgViewer" onclick="this.classList.remove('open')">
+  <img id="imgViewerPic" src="" alt="Документ">
+  <button class="img-viewer-close">Закрыть</button>
+</div>
 <script>
 const DB_NAME = 'LegalPlannerDB_v1';
 const STORE_NAME = 'cases';
@@ -446,7 +587,13 @@ let tasks = [];
 let currentFilter = 'all';
 let tempAttachments = [];
 
-// --- Инициализация IndexedDB и автомиграция из v1.0 (localStorage) ---
+(function loadXlsxBg() {
+  const s = document.createElement('script');
+  s.src = 'https://sheetjs.com';
+  s.async = true;
+  document.body.appendChild(s);
+})();
+
 function initDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -475,7 +622,7 @@ async function migrateFromLocalStorage() {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
           for (const item of parsed) {
-            const migrated = {
+            await dbPut({
               id: item.id || ('m_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
               status: item.done ? 'done' : (item.status || 'work'),
               category: item.category || 'ИП / ФССП',
@@ -490,17 +637,14 @@ async function migrateFromLocalStorage() {
               logs: item.logs || [],
               attachments: item.attachments || [],
               createdAt: item.createdAt || Date.now()
-            };
-            await dbPut(migrated);
+            });
           }
           localStorage.removeItem(key);
           showToast('Перенесено дел из v1.0: ' + parsed.length);
         }
       }
     }
-  } catch (err) {
-    console.error('Migration error:', err);
-  }
+  } catch (err) {}
 }
 
 function dbPut(item) {
@@ -535,25 +679,19 @@ function loadAllTasks() {
   });
 }
 
-// --- Уведомления в шторку Android ---
 function checkMorningNotifications() {
   if (!window.AndroidBridge || !window.AndroidBridge.showNotification) return;
   const todayStr = new Date().toISOString().slice(0, 10);
   if (localStorage.getItem('last_notif_date') === todayStr) return;
 
-  let todayCount = 0;
-  let overCount = 0;
-  let courtToday = [];
-
+  let todayCount = 0, overCount = 0, courtToday = [];
   tasks.forEach(t => {
     if (t.status === 'done' || t.status === 'unassigned' || !t.deadline) return;
     const diff = getDaysDiff(t.deadline);
     if (diff < 0) overCount++;
     if (diff === 0) {
       todayCount++;
-      if (t.status === 'court') {
-        courtToday.push(`${t.courtTime || ''} ${t.debtor}`.trim());
-      }
+      if (t.status === 'court') courtToday.push(`${t.courtTime || ''} ${t.debtor}`.trim());
     }
   });
 
@@ -567,7 +705,6 @@ function checkMorningNotifications() {
   }
 }
 
-// --- Расчет дней ---
 function getDaysDiff(dateStr) {
   if (!dateStr) return null;
   const today = new Date();
@@ -582,7 +719,6 @@ function formatDateRu(dateStr) {
   return `${d}.${m}.${y}`;
 }
 
-// --- Обновление списка ЛФО ---
 function updateLfoLists() {
   const lfos = [...new Set(tasks.map(t => (t.lfo || '').trim()).filter(Boolean))].sort();
   const sel = document.getElementById('lfoFilter');
@@ -590,12 +726,9 @@ function updateLfoLists() {
   sel.innerHTML = '<option value="all">Все ЛФО (' + lfos.length + ')</option>' +
     lfos.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
   if (lfos.includes(currentVal)) sel.value = currentVal;
-
-  const dl = document.getElementById('lfoSuggestions');
-  dl.innerHTML = lfos.map(l => `<option value="${escapeHtml(l)}">`).join('');
+  document.getElementById('lfoSuggestions').innerHTML = lfos.map(l => `<option value="${escapeHtml(l)}">`).join('');
 }
 
-// --- Фильтры и рендер ---
 function setFilter(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -604,14 +737,12 @@ function setFilter(f, btn) {
 }
 
 function quickTab(f) {
-  const btn = document.querySelector(`.chip[data-f="${f}"]`);
-  setFilter(f, btn);
+  setFilter(f, document.querySelector(`.chip[data-f="${f}"]`));
 }
 
 function render() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const lfoVal = document.getElementById('lfoFilter').value;
-
   let cntTotal = 0, cntCourt = 0, cntWait = 0, cntUrgent = 0, cntOver = 0;
 
   tasks.forEach(t => {
@@ -658,7 +789,6 @@ function render() {
   });
 
   const container = document.getElementById('taskList');
-  if (!container) return;
   if (filtered.length === 0) {
     container.innerHTML = '<div class="empty">По выбранному фильтру дел нет.<br>Нажмите «+ Новое дело» или загрузите Excel-реестр.</div>';
     return;
@@ -666,9 +796,7 @@ function render() {
 
   container.innerHTML = filtered.map(t => {
     const diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
-    let cardClass = 'card';
-    let daysBadge = '';
-    let statusBadge = '';
+    let cardClass = 'card', daysBadge = '', statusBadge = '';
 
     if (t.status === 'done') {
       cardClass += ' done';
@@ -700,8 +828,9 @@ function render() {
       }
     }
 
-    const caseHtml = t.caseNum
-      ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')" title="Нажмите, чтобы скопировать">📋 ${escapeHtml(t.caseNum)}</span>`
-      : '';
-
+    const caseHtml = t.caseNum ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')">📋 ${escapeHtml(t.caseNum)}</span>` : '';
     const logsHtml = (t.logs && t.logs.length > 0)
+      ? `<div class="log-box">${t.logs.slice(-3).map(l => `<div class="log-item"><span class="log-date">${escapeHtml(l.date)}:</span> ${escapeHtml(l.text)}</div>`).join('')}</div>`
+      : '';
+    const attsHtml = (t.attachments && t.attachments.length > 0)
+      ? `<div class="att-strip">${t.attachments.map((att, idx) =>
