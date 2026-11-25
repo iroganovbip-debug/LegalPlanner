@@ -490,7 +490,10 @@ function handleExcelImport(e) {
         const caseNum = ipMatch ? ipMatch.at(1).replace(/^№\s*/, '') : String(get(['№ ИП'])).trim();
         const timeMatch = fullDesc.match(/(\d{1,2}[:.]\d{2})/);
         const organ = String(get(['РОСП', 'Суд'])).trim() || (/суд|осп|росп/i.test(notes) ? notes : '');
-        let newStatus = stRaw.includes('выполнено') || /выполнено/i.test(fullDesc) ? 'done' : (catRaw.toLowerCase().includes('суд') || /суд|СЗ\s*\d/i.test(fullDesc) ? 'court' : (!deadline ? 'unassigned' : 'work'));
+                let newStatus = 'work';
+        if (stRaw.includes('выполнено') || /выполнено/i.test(fullDesc)) newStatus = 'done';
+        else if (catRaw.toLowerCase().includes('суд') || /суд|СЗ\s*\d/i.test(fullDesc)) newStatus = 'court';
+        else if (!deadline) newStatus = 'unassigned';
         const descCombined = [shortTask, fullDesc, notes && organ !== notes ? `Примечание: ${notes}` : ''].filter(Boolean).join('\n');
         const existing = tasks.find(t => (caseNum && t.caseNum && normKey(t.caseNum) === normKey(caseNum)) || (normKey(t.debtor) === normKey(debtor) && normKey(t.lfo) === normKey(lfo) && normKey(t.desc.split('\n').at(0)) === normKey(shortTask || fullDesc.split('\n').at(0))));
         if (existing) {
