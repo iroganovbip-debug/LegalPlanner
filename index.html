@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Планировщик юриста v1.1</title>
+<title>Планировщик юриста v1.2</title>
 <style>
   :root {
     --primary: #1e3a8a; --primary-light: #eff6ff; --accent: #2563eb;
@@ -49,7 +49,7 @@
   .chip { padding: 6px 11px; border-radius: 20px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; cursor: pointer; flex-shrink: 0; }
   .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
   .list { padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; width: 100%; }
-  .card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.04); width: 100%; word-wrap: break-word; }
+  .card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.04); width: 100%; word-wrap: break-word; cursor: pointer; }
   .card.overdue { border-left-color: var(--danger); background: #fffafa; }
   .card.urgent { border-left-color: var(--warn); }
   .card.court { border-left-color: var(--court); background: #fcfaff; }
@@ -104,6 +104,15 @@
   .btn-sec { width: 100%; padding: 10px; background: #f1f5f9; color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 600; margin-top: 6px; cursor: pointer; }
   .att-edit-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
   .att-edit-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; }
+  .view-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
+  .view-lbl { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
+  .view-val { font-size: 14px; color: var(--text); font-weight: 600; margin-bottom: 8px; word-break: break-word; }
+  .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 90; flex-direction: column; justify-content: space-between; padding: 16px; }
+  .lightbox.open { display: flex; }
+  .lb-top { display: flex; justify-content: space-between; align-items: center; color: #fff; gap: 10px; }
+  .lb-img { max-width: 100%; max-height: 75vh; object-fit: contain; margin: auto; border-radius: 8px; }
+  .lb-pdf-card { background: #fff; color: var(--text); padding: 20px; border-radius: 14px; margin: auto; text-align: center; max-width: 340px; width: 100%; }
+  .lb-btns { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
   .toast { position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 9px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
   .toast.show { opacity: 1; }
   .empty { text-align: center; color: var(--muted); padding: 36px 16px; font-size: 14px; }
@@ -112,7 +121,7 @@
 <body>
 <header>
   <div class="header-top">
-    <h1>⚖️ Планировщик <span class="ver-tag">v1.1</span></h1>
+    <h1>⚖️ Планировщик <span class="ver-tag">v1.2</span></h1>
     <div class="header-actions">
       <button class="btn-hdr" onclick="document.getElementById('excelInput').click()">📥 Excel</button>
       <button class="btn-hdr" onclick="exportBackup()">💾 Бэкап</button>
@@ -127,8 +136,8 @@
     <div class="stat-box" onclick="quickTab('overdue')"><span class="stat-num" id="stOver">0</span><span class="stat-lbl">Просрочено</span></div>
   </div>
 </header>
-<input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelImport(event)">
-<input type="file" id="backupInput" accept=".json" style="display:none" onchange="handleBackupRestore(event)">
+<input type="file" id="excelInput" accept="*/*" style="display:none" onchange="handleExcelImport(event)">
+<input type="file" id="backupInput" accept="*/*" style="display:none" onchange="handleBackupRestore(event)">
 <div class="controls">
   <div class="search-row">
     <input type="text" id="searchInput" class="search-input" placeholder="Поиск: должник, № дела/ИП, суд..." oninput="render()">
@@ -177,6 +186,22 @@
     <button class="btn-sec" onclick="closeModal()">Отмена</button>
   </div>
 </div>
+
+<div id="viewModalBg" class="modal-bg" onclick="if(event.target===this) closeViewModal()">
+  <div class="modal">
+    <div class="modal-hdr"><h2 id="vTitle">Карточка дела</h2><button class="close-btn" onclick="closeViewModal()">&times;</button></div>
+    <div id="vBody"></div>
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button class="btn-save" style="margin:0;" id="vEditBtn">✏️ Редактировать</button>
+      <button class="btn-sec" style="margin:0;" onclick="closeViewModal()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox" class="lightbox">
+  <div class="lb-top"><span id="lbName" style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Файл</span><button class="close-btn" style="color:#fff; font-size:28px;" onclick="closeLightbox()">&times;</button></div>
+  <div id="lbContent" style="display:flex; flex:1; align-items:center; justify-content:center;"></div>
+</div>
 <div id="toast" class="toast"></div>
 <script>
 const DB_NAME = 'LegalPlannerDB_v1';
@@ -185,7 +210,7 @@ let db = null, tasks = [], currentFilter = 'all', tempAttachments = [];
 
 (function loadXlsxBg() {
   const s = document.createElement('script');
-  s.src = 'https://sheetjs.com';
+  s.src = 'https://jsdelivr.net';
   s.async = true;
   document.body.appendChild(s);
 })();
@@ -222,7 +247,6 @@ async function migrateFromLocalStorage() {
             });
           }
           localStorage.removeItem(key);
-          showToast('Перенесено дел: ' + parsed.length);
         }
       }
     }
@@ -328,61 +352,104 @@ function render() {
     }
 
     const caseHtml = t.caseNum ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')">📋 ${escapeHtml(t.caseNum)}</span>` : '';
-    const logsHtml = (t.logs && t.logs.length > 0) ? `<div class="log-box">${t.logs.slice(-3).map(l => `<div class="log-item"><span class="log-date">${escapeHtml(l.date)}:</span> ${escapeHtml(l.text)}</div>`).join('')}</div>` : '';
+    const logsHtml = (t.logs && t.logs.length > 0) ? `<div class="log-box">${t.logs.slice(-2).map(l => `<div class="log-item"><span class="log-date">${escapeHtml(l.date)}:</span> ${escapeHtml(l.text)}</div>`).join('')}</div>` : '';
     const attsHtml = (t.attachments && t.attachments.length > 0) ? `<div class="att-strip">${t.attachments.map((att, idx) => `<span class="att-chip" onclick="openAttachment('${escapeJs(t.id)}', ${idx})">📎 ${escapeHtml(att.name)}</span>`).join('')}</div>` : '';
 
-    return `<div class="${cardClass}"><div class="card-top"><div class="badges-left"><span class="badge-lfo">${escapeHtml(t.lfo || 'Без ЛФО')}</span>${statusBadge}</div>${daysBadge}</div><div class="card-title">${escapeHtml(t.debtor)}</div><div class="meta-row">${caseHtml} ${t.organ ? `• <strong>${escapeHtml(t.organ)}</strong>` : ''}</div>${t.desc ? `<div class="card-desc">${escapeHtml(t.desc)}</div>` : ''}${logsHtml}${attsHtml}${t.status !== 'done' ? `<div class="quick-ext-row"><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 14)">+14 дн.</button><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 45)">+45 дн. (жалоба)</button></div>` : ''}<div class="card-footer">${t.link ? `<a class="btn-link" href="${escapeHtml(t.link)}" target="_blank">🔗 Карточка</a>` : ''}<div class="card-btns"><button class="btn-sm" onclick="openModal('${escapeJs(t.id)}')">✏️</button><button class="btn-sm btn-done" onclick="toggleDone('${escapeJs(t.id)}')">${t.status === 'done' ? '↩️' : '✅'}</button><button class="btn-sm btn-del" onclick="removeTask('${escapeJs(t.id)}')">🗑️</button></div></div></div>`;
+    return `<div class="${cardClass}" onclick="if(!event.target.closest('button,a,.case-copy,.att-chip')) openViewModal('${escapeJs(t.id)}')"><div class="card-top"><div class="badges-left"><span class="badge-lfo">${escapeHtml(t.lfo || 'Без ЛФО')}</span>${statusBadge}</div>${daysBadge}</div><div class="card-title">${escapeHtml(t.debtor)}</div><div class="meta-row">${caseHtml} ${t.organ ? `• <strong>${escapeHtml(t.organ)}</strong>` : ''}</div>${t.desc ? `<div class="card-desc">${escapeHtml(t.desc)}</div>` : ''}${logsHtml}${attsHtml}${t.status !== 'done' ? `<div class="quick-ext-row"><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 14)">+14 дн.</button><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 45)">+45 дн. (жалоба)</button></div>` : ''}<div class="card-footer">${t.link ? `<a class="btn-link" href="${escapeHtml(t.link)}" target="_blank">🔗 Карточка</a>` : ''}<div class="card-btns"><button class="btn-sm" onclick="openModal('${escapeJs(t.id)}')">✏️</button><button class="btn-sm btn-done" onclick="toggleDone('${escapeJs(t.id)}')">${t.status === 'done' ? '↩️' : '✅'}</button><button class="btn-sm btn-del" onclick="removeTask('${escapeJs(t.id)}')">🗑️</button></div></div></div>`;
   }).join('');
 }
+function openViewModal(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('vTitle').textContent = t.debtor;
+  const logsHtml = (t.logs && t.logs.length) ? t.logs.map(l => `<div class="log-item"><span class="log-date">${escapeHtml(l.date)}:</span> ${escapeHtml(l.text)}</div>`).join('') : '<span style="color:var(--muted)">Записей пока нет</span>';
+  const attsHtml = (t.attachments && t.attachments.length) ? `<div class="att-strip">${t.attachments.map((att, idx) => `<span class="att-chip" onclick="openAttachment('${escapeJs(t.id)}', ${idx})">📎 ${escapeHtml(att.name)}</span>`).join('')}</div>` : '<span style="color:var(--muted)">Файлы не прикреплены</span>';
+  document.getElementById('vBody').innerHTML = `
+    <div class="view-box">
+      <div class="view-lbl">ЛФО / Взыскатель и Категория</div><div class="view-val">${escapeHtml(t.lfo)} • ${escapeHtml(t.category)}</div>
+      <div class="view-lbl">№ дела / ИП</div><div class="view-val">${t.caseNum ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')">📋 ${escapeHtml(t.caseNum)}</span>` : 'Не указан'}</div>
+      <div class="view-lbl">Орган (Суд / РОСП)</div><div class="view-val">${escapeHtml(t.organ || 'Не указан')}</div>
+      <div class="view-lbl">Срок / Дата заседания</div><div class="view-val">${t.deadline ? formatDateRu(t.deadline) : 'Не назначено'} ${t.status === 'court' && t.courtTime ? 'в ' + escapeHtml(t.courtTime) : ''}</div>
+    </div>
+    ${t.desc ? `<div class="view-lbl">Описание / Суть задачи</div><div class="card-desc" style="margin-bottom:10px;">${escapeHtml(t.desc)}</div>` : ''}
+    <div class="view-lbl">Вложения (нажмите для просмотра / скачивания)</div><div style="margin-bottom:10px;">${attsHtml}</div>
+    <div class="view-lbl">История действий</div><div class="log-box" style="margin-bottom:10px;">${logsHtml}</div>
+    ${t.link ? `<a class="btn-link" style="width:100%; justify-content:center; padding:10px;" href="${escapeHtml(t.link)}" target="_blank">🔗 Открыть внешнюю ссылку</a>` : ''}`;
+  document.getElementById('vEditBtn').onclick = () => { closeViewModal(); openModal(id); };
+  document.getElementById('viewModalBg').classList.add('open');
+}
+
+function closeViewModal() { document.getElementById('viewModalBg').classList.remove('open'); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+function dataUrlToBlob(dataUrl) {
+  const parts = dataUrl.split(',');
+  const mime = parts.at(0).match(/:(.*?);/).at(1);
+  const raw = atob(parts.at(1));
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+async function shareOrDownloadAtt(taskId, idx) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t || !t.attachments || !t.attachments[idx]) return;
+  const att = t.attachments[idx];
+  try {
+    const blob = dataUrlToBlob(att.dataUrl);
+    const file = new File([blob], att.name, { type: att.type || 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: att.name }); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = att.name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showToast('Файл передан на скачивание');
+  } catch (err) { showToast('Ошибка файла: ' + err.message); }
+}
+
+function openAttachment(taskId, idx) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t || !t.attachments || !t.attachments[idx]) return;
+  const att = t.attachments[idx];
+  document.getElementById('lbName').textContent = att.name;
+  const box = document.getElementById('lbContent');
+  const isImg = (att.type && att.type.startsWith('image/')) || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+  if (isImg) {
+    box.innerHTML = `<div style="text-align:center;"><img class="lb-img" src="${att.dataUrl}"><div class="lb-btns"><button class="btn-save" style="width:auto; padding:9px 16px;" onclick="shareOrDownloadAtt('${escapeJs(taskId)}', ${idx})">📤 Сохранить / Поделиться</button></div></div>`;
+  } else {
+    box.innerHTML = `<div class="lb-pdf-card"><div style="font-size:40px; margin-bottom:8px;">📄</div><div style="font-weight:700; margin-bottom:6px; word-break:break-word;">${escapeHtml(att.name)}</div><div style="font-size:12px; color:var(--muted);">Откройте PDF в системном просмотрщике или сохраните на телефон.</div><div class="lb-btns"><button class="btn-save" onclick="shareOrDownloadAtt('${escapeJs(taskId)}', ${idx})">📤 Открыть / Сохранить PDF</button></div></div>`;
+  }
+  document.getElementById('lightbox').classList.add('open');
+}
 function openModal(id = null) {
-  tempAttachments = [];
-  document.getElementById('fNewLog').value = '';
-  document.getElementById('fAttInput').value = '';
+  tempAttachments = []; document.getElementById('fNewLog').value = ''; document.getElementById('fAttInput').value = '';
   if (id) {
-    const t = tasks.find(x => x.id === id);
-    if (!t) return;
+    const t = tasks.find(x => x.id === id); if (!t) return;
     document.getElementById('modalTitle').textContent = 'Редактировать дело';
-    document.getElementById('fId').value = t.id;
-    document.getElementById('fStatus').value = t.status || 'work';
-    document.getElementById('fCategory').value = t.category || 'ИП / ФССП';
-    document.getElementById('fLfo').value = t.lfo || '';
-    document.getElementById('fCaseNum').value = t.caseNum || '';
-    document.getElementById('fDebtor').value = t.debtor || '';
-    document.getElementById('fOrgan').value = t.organ || '';
-    document.getElementById('fDeadline').value = t.deadline || '';
-    document.getElementById('fCourtTime').value = t.courtTime || '10:00';
-    document.getElementById('fDesc').value = t.desc || '';
-    document.getElementById('fLink').value = t.link || '';
-    tempAttachments = JSON.parse(JSON.stringify(t.attachments || []));
+    document.getElementById('fId').value = t.id; document.getElementById('fStatus').value = t.status || 'work';
+    document.getElementById('fCategory').value = t.category || 'ИП / ФССП'; document.getElementById('fLfo').value = t.lfo || '';
+    document.getElementById('fCaseNum').value = t.caseNum || ''; document.getElementById('fDebtor').value = t.debtor || '';
+    document.getElementById('fOrgan').value = t.organ || ''; document.getElementById('fDeadline').value = t.deadline || '';
+    document.getElementById('fCourtTime').value = t.courtTime || '10:00'; document.getElementById('fDesc').value = t.desc || '';
+    document.getElementById('fLink').value = t.link || ''; tempAttachments = JSON.parse(JSON.stringify(t.attachments || []));
   } else {
     document.getElementById('modalTitle').textContent = 'Новое дело';
-    document.getElementById('fId').value = '';
-    document.getElementById('fStatus').value = 'work';
-    document.getElementById('fCategory').value = 'ИП / ФССП';
-    document.getElementById('fLfo').value = '';
-    document.getElementById('fCaseNum').value = '';
-    document.getElementById('fDebtor').value = '';
-    document.getElementById('fOrgan').value = '';
-    const d = new Date(); d.setDate(d.getDate() + 45);
-    document.getElementById('fDeadline').value = d.toISOString().slice(0, 10);
-    document.getElementById('fCourtTime').value = '10:00';
-    document.getElementById('fDesc').value = '';
-    document.getElementById('fLink').value = '';
+    document.getElementById('fId').value = ''; document.getElementById('fStatus').value = 'work';
+    document.getElementById('fCategory').value = 'ИП / ФССП'; document.getElementById('fLfo').value = '';
+    document.getElementById('fCaseNum').value = ''; document.getElementById('fDebtor').value = ''; document.getElementById('fOrgan').value = '';
+    const d = new Date(); d.setDate(d.getDate() + 45); document.getElementById('fDeadline').value = d.toISOString().slice(0, 10);
+    document.getElementById('fCourtTime').value = '10:00'; document.getElementById('fDesc').value = ''; document.getElementById('fLink').value = '';
   }
-  renderEditAttachments();
-  document.getElementById('modalBg').classList.add('open');
+  renderEditAttachments(); document.getElementById('modalBg').classList.add('open');
 }
 
 function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
 function addDaysToInput(days) { const inp = document.getElementById('fDeadline'); const base = inp.value ? new Date(inp.value + 'T00:00:00') : new Date(); base.setDate(base.getDate() + days); inp.value = base.toISOString().slice(0, 10); }
 function handleFileAttach(e) { Array.from(e.target.files || []).forEach(file => { const r = new FileReader(); r.onload = (ev) => { tempAttachments.push({ name: file.name, type: file.type, dataUrl: ev.target.result }); renderEditAttachments(); }; r.readAsDataURL(file); }); }
 function renderEditAttachments() { document.getElementById('attEditList').innerHTML = tempAttachments.map((att, idx) => `<div class="att-edit-item"><span>📎 ${escapeHtml(att.name)}</span><button type="button" class="btn-sm btn-del" onclick="tempAttachments.splice(${idx},1);renderEditAttachments()">✕</button></div>`).join(''); }
-function openAttachment(taskId, idx) { const t = tasks.find(x => x.id === taskId); if (!t || !t.attachments || !t.attachments[idx]) return; const att = t.attachments[idx]; const win = window.open(); if (win) win.document.write(`<iframe src="${att.dataUrl}" frameborder="0" style="border:0;width:100%;height:100%;"></iframe>`); else { const a = document.createElement('a'); a.href = att.dataUrl; a.download = att.name; a.click(); } }
 
 async function saveTask() {
   const id = document.getElementById('fId').value || ('case_' + Date.now());
-  const existing = tasks.find(x => x.id === id);
-  const logs = existing ? [...(existing.logs || [])] : [];
+  const existing = tasks.find(x => x.id === id); const logs = existing ? [...(existing.logs || [])] : [];
   const newLogText = document.getElementById('fNewLog').value.trim();
   if (newLogText) logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: newLogText });
   await dbPut({ id, status: document.getElementById('fStatus').value, category: document.getElementById('fCategory').value, lfo: document.getElementById('fLfo').value.trim() || 'Без ЛФО', caseNum: document.getElementById('fCaseNum').value.trim(), debtor: document.getElementById('fDebtor').value.trim() || 'Без названия', organ: document.getElementById('fOrgan').value.trim(), deadline: document.getElementById('fDeadline').value, courtTime: document.getElementById('fCourtTime').value, desc: document.getElementById('fDesc').value.trim(), link: document.getElementById('fLink').value.trim(), logs, attachments: tempAttachments, createdAt: existing ? existing.createdAt : Date.now() });
@@ -392,19 +459,54 @@ async function saveTask() {
 async function extendTask(id, days) { const t = tasks.find(x => x.id === id); if (!t) return; const base = t.deadline ? new Date(t.deadline + 'T00:00:00') : new Date(); const today = new Date(); today.setHours(0, 0, 0, 0); const start = base < today ? today : base; start.setDate(start.getDate() + days); t.deadline = start.toISOString().slice(0, 10); if (t.status === 'unassigned') t.status = 'work'; t.logs = t.logs || []; t.logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: `Срок продлён на +${days} дн. (до ${formatDateRu(t.deadline)})` }); await dbPut(t); await loadAllTasks(); showToast(`Продлено на +${days} дн.`); }
 async function toggleDone(id) { const t = tasks.find(x => x.id === id); if (!t) return; t.status = t.status === 'done' ? 'work' : 'done'; await dbPut(t); await loadAllTasks(); showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу'); }
 async function removeTask(id) { if (!confirm('Удалить это дело?')) return; await dbDelete(id); await loadAllTasks(); showToast('Удалено'); }
+function normKey(s) { return String(s || '').toLowerCase().replace(/[^a-zа-яё0-9]/gi, ''); }
+function parseExcelDate(val) { if (!val) return ''; if (typeof val === 'number') { const d = new Date(Math.round((val - 25569) * 86400 * 1000)); return !isNaN(d) ? d.toISOString().slice(0, 10) : ''; } const s = String(val).trim(); if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10); const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/); return m ? `${m.at(3)}-${m.at(2).padStart(2, '0')}-${m.at(1).padStart(2, '0')}` : ''; }
 
-function normKey(s) {
-  return String(s || '').toLowerCase().replace(/[^a-zа-яё0-9]/gi, '');
+function handleExcelImport(e) {
+  const file = e.target.files.item(0); if (!file) return;
+  if (typeof XLSX === 'undefined') { showToast('Модуль Excel ещё грузится, проверьте интернет'); return; }
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array' });
+      const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames.at(0)], { header: 1, defval: '' });
+      let hdrIdx = rawRows.findIndex(r => r.some(c => String(c).includes('Должник') || String(c).includes('Дедлайн')));
+      if (hdrIdx === -1) hdrIdx = 0;
+      const headers = rawRows[hdrIdx].map(h => String(h).trim());
+      let added = 0, updated = 0, skipped = 0;
+      for (let i = hdrIdx + 1; i < rawRows.length; i++) {
+        const row = rawRows[i]; if (!row || row.every(c => String(c).trim() === '')) continue;
+        if (String(row.at(0)).trim() === 'Категория задачи') break;
+        const get = (keys) => { const idx = headers.findIndex(h => keys.some(k => h.toLowerCase().includes(k.toLowerCase()))); return idx !== -1 ? row[idx] : ''; };
+        const debtor = String(get(['Должник', 'Контрагент', 'ФИО'])).replace(/\s+/g, ' ').trim();
+        const shortTask = String(get(['Задача (кратко)', 'Задача'])).replace(/\s+/g, ' ').trim();
+        if (!debtor && !shortTask) continue;
+        const fullDesc = String(get(['Подробное описание', 'Описание', 'Комментарий'])).trim();
+        const notes = String(get(['Результат', 'Примечания'])).trim();
+        const catRaw = String(get(['Категория'])).trim(); const stRaw = String(get(['Статус'])).trim().toLowerCase();
+        const lfo = String(get(['ЛФО', 'Взыскатель']) || 'Без ЛФО').trim();
+        const deadline = parseExcelDate(get(['Крайний срок', 'Дедлайн', 'Срок'])) || (fullDesc.match(/Срок:\s*(\d{4}-\d{2}-\d{2})/) || []).at(1) || '';
+        const ipMatch = (shortTask + ' ' + fullDesc + ' ' + get(['№ ИП'])).match(/(\d+\/\d+\/\d+-ИП|№\s*[\d\-\/]+)/i);
+        const caseNum = ipMatch ? ipMatch.at(1).replace(/^№\s*/, '') : String(get(['№ ИП'])).trim();
+        const timeMatch = fullDesc.match(/(\d{1,2}[:.]\d{2})/);
+        const organ = String(get(['РОСП', 'Суд'])).trim() || (/суд|осп|росп/i.test(notes) ? notes : '');
+        let newStatus = stRaw.includes('выполнено') || /выполнено/i.test(fullDesc) ? 'done' : (catRaw.toLowerCase().includes('суд') || /суд|СЗ\s*\d/i.test(fullDesc) ? 'court' : (!deadline ? 'unassigned' : 'work'));
+        const descCombined = [shortTask, fullDesc, notes && organ !== notes ? `Примечание: ${notes}` : ''].filter(Boolean).join('\n');
+        const existing = tasks.find(t => (caseNum && t.caseNum && normKey(t.caseNum) === normKey(caseNum)) || (normKey(t.debtor) === normKey(debtor) && normKey(t.lfo) === normKey(lfo) && normKey(t.desc.split('\n').at(0)) === normKey(shortTask || fullDesc.split('\n').at(0))));
+        if (existing) {
+          if (existing.desc === descCombined && existing.deadline === deadline && existing.status === newStatus) { skipped++; continue; }
+          existing.status = existing.status === 'done' ? 'done' : newStatus; existing.deadline = deadline || existing.deadline; existing.organ = organ || existing.organ; existing.caseNum = caseNum || existing.caseNum; existing.desc = descCombined;
+          await dbPut(existing); updated++;
+        } else {
+          await dbPut({ id: 'xl_' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 5), status: newStatus, category: catRaw.includes('Суд') ? 'Суд / Иск' : 'ИП / ФССП', lfo, caseNum, debtor: debtor || shortTask, organ, deadline, courtTime: timeMatch ? timeMatch.at(1).replace('.', ':') : '10:00', desc: descCombined, link: '', logs: [], attachments: [], createdAt: Date.now() });
+          added++;
+        }
+      }
+      await loadAllTasks(); showToast(`Новых: ${added} | Обновлено: ${updated} | Без изм.: ${skipped}`);
+    } catch (err) { showToast('Ошибка Excel: ' + err.message); }
+    e.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
 }
 
-
 function exportBackup() { const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `lawyer_planner_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); showToast('Резервная копия скачана'); }
-function handleBackupRestore(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async (ev) => { try { const arr = JSON.parse(ev.target.result); if (Array.isArray(arr)) { for (const item of arr) if (item.id) await dbPut(item); await loadAllTasks(); showToast(`Восстановлено: ${arr.length}`); } } catch (err) { showToast('Неверный файл бэкапа'); } e.target.value = ''; }; reader.readAsText(file); }
-function copyText(txt) { if (navigator.clipboard) navigator.clipboard.writeText(txt); showToast('Скопировано: ' + txt); }
-function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2500); }
-function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-function escapeJs(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-window.addEventListener('DOMContentLoaded', () => { initDB().catch(() => showToast('Ошибка БД')); });
-</script>
-</body>
-</html>
