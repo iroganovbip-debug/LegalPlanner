@@ -2,145 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Планировщик юриста v1.1</title>
-<style>
-  :root {
-    --primary: #1e3a8a;
-    --primary-light: #eff6ff;
-    --accent: #2563eb;
-    --bg: #f1f5f9;
-    --card: #ffffff;
-    --text: #0f172a;
-    --muted: #64748b;
-    --border: #e2e8f0;
-    --danger: #dc2626;
-    --danger-bg: #fef2f2;
-    --warn: #d97706;
-    --warn-bg: #fffbeb;
-    --ok: #16a34a;
-    --ok-bg: #f0fdf4;
-    --court: #7c3aed;
-    --court-bg: #f5f3ff;
-    --wait: #475569;
-    --wait-bg: #f8fafc;
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding-bottom: 90px;
-  }
-  header {
-    background: var(--primary);
-    color: #fff;
-    padding: 12px 14px;
-    position: sticky;
-    top: 0;
-    z-index: 25;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.14);
-  }
-  .header-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  h1 { margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-  .ver-tag { font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; font-weight: 600; }
-  .header-actions { display: flex; gap: 5px; }
-  .btn-hdr {
-    background: rgba(255,255,255,0.16);
-    border: 1px solid rgba(255,255,255,0.28);
-    color: #fff;
-    padding: 6px 9px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
-  .stat-box { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 5px 2px; text-align: center; cursor: pointer; }
-  .stat-num { font-size: 15px; font-weight: 700; display: block; }
-  .stat-lbl { font-size: 9px; opacity: 0.92; }
-  .controls { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 8px; }
-  .search-row { display: flex; gap: 6px; }
-  .search-input { flex: 1; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: #fff; }
-  .lfo-select { max-width: 145px; padding: 9px 8px; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 600; background: #fff; color: var(--primary); }
-  .filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-  .filters::-webkit-scrollbar { display: none; }
-  .chip { padding: 6px 11px; border-radius: 20px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; cursor: pointer; }
-  .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .list { padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; }
-  .card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .card.overdue { border-left-color: var(--danger); background: #fffafa; }
-  .card.urgent { border-left-color: var(--warn); }
-  .card.court { border-left-color: var(--court); background: #fcfaff; }
-  .card.unassigned { border-left-color: var(--wait); }
-  .card.done { border-left-color: var(--ok); opacity: 0.76; }
-  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
-  .badges-left { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-  .badge-lfo { display: inline-block; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; border: 1px solid #bfdbfe; }
-  .badge-status { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
-  .st-court { background: var(--court-bg); color: var(--court); border: 1px solid #ddd6fe; }
-  .st-wait { background: var(--wait-bg); color: var(--wait); border: 1px solid #cbd5e1; }
-  .st-work { background: #eff6ff; color: var(--accent); }
-  .st-done { background: var(--ok-bg); color: var(--ok); }
-  .badge-days { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
-  .days-ok { background: var(--ok-bg); color: var(--ok); }
-  .days-warn { background: var(--warn-bg); color: var(--warn); }
-  .days-over { background: var(--danger-bg); color: var(--danger); }
-  .days-court { background: var(--court-bg); color: var(--court); }
-  .days-wait { background: var(--wait-bg); color: var(--wait); }
-  .card-title { font-size: 15px; font-weight: 700; margin: 4px 0; }
-  .meta-row { font-size: 12px; color: var(--muted); margin-bottom: 4px; line-height: 1.45; }
-  .meta-row strong { color: var(--text); }
-  .case-copy { display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; border: 1px dashed #94a3b8; color: var(--text); font-weight: 700; padding: 1px 6px; border-radius: 5px; cursor: pointer; }
-  .card-desc { font-size: 13px; color: #334155; background: #f8fafc; padding: 8px; border-radius: 8px; margin: 6px 0; white-space: pre-wrap; line-height: 1.4; }
-  .log-box { background: #f8fafc; border-left: 2px solid #94a3b8; padding: 6px 8px; margin: 6px 0; border-radius: 0 8px 8px 0; font-size: 12px; }
-  .log-item { margin-bottom: 3px; color: #334155; }
-  .log-date { font-weight: 700; color: var(--primary); }
-  .att-strip { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-  .att-chip { display: inline-flex; align-items: center; gap: 4px; background: #eff6ff; border: 1px solid #bfdbfe; color: var(--primary); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px; cursor: pointer; }
-  .quick-ext-row { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
-  .btn-ext { padding: 4px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer; }
-  .card-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-  .btn-link { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); color: #fff; text-decoration: none; padding: 6px 9px; border-radius: 8px; font-size: 11px; font-weight: 600; }
-  .card-btns { display: flex; gap: 5px; margin-left: auto; }
-  .btn-sm { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
-  .btn-done { color: var(--ok); border-color: #bbf7d0; background: var(--ok-bg); }
-  .btn-del { color: var(--danger); border-color: #fecaca; background: var(--danger-bg); }
-  .fab { position: fixed; right: 16px; bottom: 18px; background: var(--primary); color: #fff; border: none; border-radius: 28px; padding: 14px 20px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 14px rgba(30,58,138,0.38); cursor: pointer; z-index: 30; }
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.58); z-index: 50; align-items: flex-end; justify-content: center; }
-  .modal-bg.open { display: flex; }
-  .modal { background: #fff; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px; }
-  .modal-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-  .modal-hdr h2 { margin: 0; font-size: 17px; }
-  .close-btn { background: none; border: none; font-size: 24px; color: var(--muted); cursor: pointer; line-height: 1; }
-  .field { margin-bottom: 10px; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
-  .field input, .field select, .field textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; }
-  .quick-days { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-  .q-btn { padding: 5px 9px; font-size: 11px; font-weight: 600; border-radius: 6px; border: 1px solid #bfdbfe; background: var(--primary-light); color: var(--primary); cursor: pointer; }
-  .btn-save { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; margin-top: 6px; cursor: pointer; }
-  .btn-sec { width: 100%; padding: 10px; background: #f1f5f9; color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 600; margin-top: 6px; cursor: pointer; }
-  .att-edit-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
-  .att-edit-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; }
-  .toast { position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 9px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
-  .toast.show { opacity: 1; }
-  .empty { text-align: center; color: var(--muted); padding: 36px 16px; font-size: 14px; }
-</style>
-</head>
-<body>
-
-<header>
-  <div class="header-top">
-    <h1>⚖️ Планировщик <span class="ver-tag">v1.1</span></h1>
-    <div class="header-actions">
-      <button class="btn-hdr" onclick="document.getElementById('excelInput').click()">📥 Excel</button>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Планировщик юриста v1.1</title>
 <style>
   :root {
@@ -151,27 +13,43 @@
     --court: #7c3aed; --court-bg: #f5f3ff; --wait: #475569; --wait-bg: #f8fafc;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
-  header { background: var(--primary); color: #fff; padding: 12px 14px; position: sticky; top: 0; z-index: 25; box-shadow: 0 2px 6px rgba(0,0,0,0.14); }
-  .header-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  h1 { margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-  .ver-tag { font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 6px; font-weight: 600; }
-  .header-actions { display: flex; gap: 5px; }
-  .btn-hdr { background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28); color: #fff; padding: 6px 9px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
-  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
-  .stat-box { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 5px 2px; text-align: center; cursor: pointer; }
-  .stat-num { font-size: 15px; font-weight: 700; display: block; }
-  .stat-lbl { font-size: 9px; opacity: 0.92; }
-  .controls { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 8px; }
-  .search-row { display: flex; gap: 6px; }
-  .search-input { flex: 1; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; background: #fff; }
-  .lfo-select { max-width: 145px; padding: 9px 8px; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 600; background: #fff; color: var(--primary); }
-  .filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; max-width: 100%; overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+  }
+  body { padding-bottom: 92px; }
+  header {
+    background: var(--primary); color: #fff;
+    padding: calc(10px + env(safe-area-inset-top)) 12px 12px;
+    position: sticky; top: 0; z-index: 25;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); width: 100%;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  h1 { margin: 0; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .ver-tag { font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 5px; font-weight: 600; }
+  .header-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .btn-hdr {
+    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28);
+    color: #fff; padding: 5px 8px; border-radius: 7px; font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 10px; width: 100%; }
+  .stat-box { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 5px 2px; text-align: center; cursor: pointer; min-width: 0; }
+  .stat-num { font-size: 15px; font-weight: 700; display: block; line-height: 1.2; }
+  .stat-lbl { font-size: 9px; opacity: 0.92; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .controls { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .search-row { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+  .search-input, .lfo-select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border);
+    border-radius: 10px; font-size: 14px; background: #fff; color: var(--text);
+  }
+  .lfo-select { font-weight: 600; color: var(--primary); font-size: 13px; }
+  .filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; width: 100%; }
   .filters::-webkit-scrollbar { display: none; }
-  .chip { padding: 6px 11px; border-radius: 20px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; cursor: pointer; }
+  .chip { padding: 6px 11px; border-radius: 20px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; cursor: pointer; flex-shrink: 0; }
   .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .list { padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; }
-  .card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .list { padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.04); width: 100%; word-wrap: break-word; }
   .card.overdue { border-left-color: var(--danger); background: #fffafa; }
   .card.urgent { border-left-color: var(--warn); }
   .card.court { border-left-color: var(--court); background: #fcfaff; }
@@ -200,16 +78,16 @@
   .log-item { margin-bottom: 3px; color: #334155; }
   .log-date { font-weight: 700; color: var(--primary); }
   .att-strip { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-  .att-chip { display: inline-flex; align-items: center; gap: 4px; background: #eff6ff; border: 1px solid #bfdbfe; color: var(--primary); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px; cursor: pointer; }
+  .att-chip { display: inline-flex; align-items: center; gap: 4px; background: #eff6ff; border: 1px solid #bfdbfe; color: var(--primary); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .quick-ext-row { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
-  .btn-ext { padding: 4px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer; }
+  .btn-ext { padding: 5px 9px; font-size: 11px; font-weight: 600; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; cursor: pointer; }
   .card-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
   .btn-link { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); color: #fff; text-decoration: none; padding: 6px 9px; border-radius: 8px; font-size: 11px; font-weight: 600; }
   .card-btns { display: flex; gap: 5px; margin-left: auto; }
-  .btn-sm { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-sm { padding: 6px 9px; border-radius: 8px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
   .btn-done { color: var(--ok); border-color: #bbf7d0; background: var(--ok-bg); }
   .btn-del { color: var(--danger); border-color: #fecaca; background: var(--danger-bg); }
-  .fab { position: fixed; right: 16px; bottom: 18px; background: var(--primary); color: #fff; border: none; border-radius: 28px; padding: 14px 20px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 14px rgba(30,58,138,0.38); cursor: pointer; z-index: 30; }
+  .fab { position: fixed; right: 16px; bottom: 18px; background: var(--primary); color: #fff; border: none; border-radius: 28px; padding: 13px 18px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 14px rgba(30,58,138,0.38); cursor: pointer; z-index: 30; }
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.58); z-index: 50; align-items: flex-end; justify-content: center; }
   .modal-bg.open { display: flex; }
   .modal { background: #fff; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px; }
@@ -266,283 +144,3 @@
   </div>
 </div>
 <div id="taskList" class="list"></div>
-<button class="fab" onclick="openModal()">+ Новое дело</button>
-<div id="modalBg" class="modal-bg" onclick="if(event.target===this) closeModal()">
-  <div class="modal">
-    <div class="modal-hdr"><h2 id="modalTitle">Новое дело / задача</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
-    <input type="hidden" id="fId">
-    <div class="field-row">
-      <div class="field"><label>Статус</label><select id="fStatus"><option value="work">В работе (ИП / запрос)</option><option value="court">Судебное заседание</option><option value="unassigned">Не назначено (ждём дату)</option><option value="done">Завершено</option></select></div>
-      <div class="field"><label>Категория</label><select id="fCategory"><option value="ИП / ФССП">ИП / ФССП</option><option value="Жалоба ФССП">Жалоба ФССП (45 дн.)</option><option value="Суд / Иск">Суд / Иск</option><option value="Банкротство">Банкротство</option><option value="ЗНСР / Списание">ЗНСР / Списание</option><option value="Прочее">Прочее</option></select></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>ЛФО / Взыскатель</label><input type="text" id="fLfo" list="lfoSuggestions" placeholder="Напр. Сбер / ПКБ"><datalist id="lfoSuggestions"></datalist></div>
-      <div class="field"><label>№ дела / № ИП</label><input type="text" id="fCaseNum" placeholder="12345/26/50038-ИП"></div>
-    </div>
-    <div class="field"><label>Должник (ФИО / Наименование)</label><input type="text" id="fDebtor" placeholder="Иванов Иван Иванович"></div>
-    <div class="field"><label>Орган (РОСП / Суд)</label><input type="text" id="fOrgan" placeholder="Сергиево-Посадский РОСП / АСМО"></div>
-    <div class="field-row">
-      <div class="field"><label>Контрольная дата / Суд</label><input type="date" id="fDeadline"></div>
-      <div class="field"><label>Время суда (если суд)</label><input type="time" id="fCourtTime" value="10:00"></div>
-    </div>
-    <div class="quick-days" style="margin-bottom:10px;">
-      <button type="button" class="q-btn" onclick="addDaysToInput(7)">+7 дн.</button>
-      <button type="button" class="q-btn" onclick="addDaysToInput(14)">+14 дн.</button>
-      <button type="button" class="q-btn" onclick="addDaysToInput(30)">+30 дн.</button>
-      <button type="button" class="q-btn" onclick="addDaysToInput(45)">+45 дн. (жалоба ФССП)</button>
-    </div>
-    <div class="field"><label>Суть задачи / Комментарий</label><textarea id="fDesc" rows="3" placeholder="Направлено ходатайство о..."></textarea></div>
-    <div class="field"><label>Ссылка (КАД / Госуслуги / ФССП)</label><input type="url" id="fLink" placeholder="https://arbitr.ru..."></div>
-    <div class="field"><label>Добавить запись в историю действий (необязательно)</label><input type="text" id="fNewLog" placeholder="Напр. Отправлен запрос приставу через ГУ"></div>
-    <div class="field"><label>Прикрепить фото или PDF (хранится в телефоне)</label><input type="file" id="fAttInput" accept="image/*,.pdf" multiple onchange="handleFileAttach(event)"><div id="attEditList" class="att-edit-list"></div></div>
-    <button class="btn-save" onclick="saveTask()">Сохранить дело</button>
-    <button class="btn-sec" onclick="closeModal()">Отмена</button>
-  </div>
-</div>
-<div id="toast" class="toast"></div>
-<script>
-const DB_NAME = 'LegalPlannerDB_v1';
-const STORE_NAME = 'cases';
-let db = null, tasks = [], currentFilter = 'all', tempAttachments = [];
-
-(function loadXlsxBg() {
-  const s = document.createElement('script');
-  s.src = 'https://sheetjs.com';
-  s.async = true;
-  document.body.appendChild(s);
-})();
-
-function initDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = (e) => {
-      if (!e.target.result.objectStoreNames.contains(STORE_NAME)) {
-        e.target.result.createObjectStore(STORE_NAME, { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = async (e) => { db = e.target.result; await migrateFromLocalStorage(); await loadAllTasks(); resolve(); };
-    req.onerror = (e) => reject(e);
-  });
-}
-
-async function migrateFromLocalStorage() {
-  try {
-    for (const key of ['legal_tasks_v1', 'lawyer_tasks', 'tasks']) {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          for (const item of parsed) {
-            await dbPut({
-              id: item.id || ('m_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
-              status: item.done ? 'done' : (item.status || 'work'), category: item.category || 'ИП / ФССП',
-              lfo: item.lfo || 'Без ЛФО', caseNum: item.caseNum || item.number || '',
-              debtor: item.debtor || item.title || 'Без названия', organ: item.organ || item.court || '',
-              deadline: item.deadline || item.date || '', courtTime: item.courtTime || '10:00',
-              desc: item.desc || item.description || '', link: item.link || item.url || '',
-              logs: item.logs || [], attachments: item.attachments || [], createdAt: item.createdAt || Date.now()
-            });
-          }
-          localStorage.removeItem(key);
-          showToast('Перенесено дел: ' + parsed.length);
-        }
-      }
-    }
-  } catch (err) {}
-}
-
-function dbPut(item) { return new Promise((res, rej) => { const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).put(item); tx.oncomplete = () => res(); tx.onerror = (e) => rej(e); }); }
-function dbDelete(id) { return new Promise((res, rej) => { const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).delete(id); tx.oncomplete = () => res(); tx.onerror = (e) => rej(e); }); }
-function loadAllTasks() { return new Promise((res) => { const tx = db.transaction(STORE_NAME, 'readonly'); const req = tx.objectStore(STORE_NAME).getAll(); req.onsuccess = () => { tasks = req.result || []; updateLfoLists(); render(); res(); }; }); }
-function getDaysDiff(dateStr) {
-  if (!dateStr) return null;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr + 'T00:00:00');
-  return Math.round((target - today) / (1000 * 60 * 60 * 24));
-}
-
-function formatDateRu(dateStr) {
-  if (!dateStr) return 'не указана';
-  const [y, m, d] = dateStr.split('-');
-  return `${d}.${m}.${y}`;
-}
-
-function updateLfoLists() {
-  const lfos = [...new Set(tasks.map(t => (t.lfo || '').trim()).filter(Boolean))].sort();
-  const sel = document.getElementById('lfoFilter');
-  const currentVal = sel.value;
-  sel.innerHTML = '<option value="all">Все ЛФО (' + lfos.length + ')</option>' + lfos.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
-  if (lfos.includes(currentVal)) sel.value = currentVal;
-  document.getElementById('lfoSuggestions').innerHTML = lfos.map(l => `<option value="${escapeHtml(l)}">`).join('');
-}
-
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  render();
-}
-
-function quickTab(f) { setFilter(f, document.querySelector(`.chip[data-f="${f}"]`)); }
-
-function render() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  const lfoVal = document.getElementById('lfoFilter').value;
-  let cntTotal = 0, cntCourt = 0, cntWait = 0, cntUrgent = 0, cntOver = 0;
-
-  tasks.forEach(t => {
-    if (t.status !== 'done') {
-      cntTotal++;
-      if (t.status === 'court') cntCourt++;
-      if (t.status === 'unassigned') cntWait++;
-      if (t.status !== 'unassigned' && t.deadline) {
-        const d = getDaysDiff(t.deadline);
-        if (d < 0) cntOver++;
-        else if (d <= 3) cntUrgent++;
-      }
-    }
-  });
-
-  document.getElementById('stTotal').textContent = cntTotal;
-  document.getElementById('stCourt').textContent = cntCourt;
-  document.getElementById('stWait').textContent = cntWait;
-  document.getElementById('stUrgent').textContent = cntUrgent;
-  document.getElementById('stOver').textContent = cntOver;
-
-  let filtered = tasks.filter(t => {
-    if (lfoVal !== 'all' && (t.lfo || '').trim() !== lfoVal) return false;
-    if (q && !`${t.lfo} ${t.debtor} ${t.caseNum} ${t.organ} ${t.desc} ${t.category}`.toLowerCase().includes(q)) return false;
-    const diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
-    if (currentFilter === 'all') return t.status !== 'done';
-    if (currentFilter === 'court') return t.status === 'court';
-    if (currentFilter === 'unassigned') return t.status === 'unassigned';
-    if (currentFilter === 'urgent') return t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff >= 0 && diff <= 3;
-    if (currentFilter === 'overdue') return t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff < 0;
-    if (currentFilter === 'done') return t.status === 'done';
-    return true;
-  });
-
-  filtered.sort((a, b) => {
-    if (a.status === 'done' && b.status !== 'done') return 1;
-    if (b.status === 'done' && a.status !== 'done') return -1;
-    const da = (a.status !== 'unassigned' && a.deadline) ? getDaysDiff(a.deadline) : 9999;
-    const dbVal = (b.status !== 'unassigned' && b.deadline) ? getDaysDiff(b.deadline) : 9999;
-    return da - dbVal;
-  });
-
-  const container = document.getElementById('taskList');
-  if (!container) return;
-  if (filtered.length === 0) { container.innerHTML = '<div class="empty">По выбранному фильтру дел нет.<br>Нажмите «+ Новое дело» или загрузите Excel.</div>'; return; }
-
-  container.innerHTML = filtered.map(t => {
-    const diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
-    let cardClass = 'card', daysBadge = '', statusBadge = '';
-    if (t.status === 'done') { cardClass += ' done'; statusBadge = '<span class="badge-status st-done">✅ Завершено</span>'; }
-    else if (t.status === 'court') { cardClass += ' court'; statusBadge = `<span class="badge-status st-court">⚖️ Суд ${t.courtTime || ''}</span>`; }
-    else if (t.status === 'unassigned') { cardClass += ' unassigned'; statusBadge = '<span class="badge-status st-wait">⏳ Не назначено</span>'; daysBadge = '<span class="badge-days days-wait">Ожидает дату</span>'; }
-    else { statusBadge = `<span class="badge-status st-work">${escapeHtml(t.category || 'В работе')}</span>`; }
-
-    if (t.status !== 'done' && t.status !== 'unassigned' && diff !== null) {
-      if (diff < 0) { cardClass += ' overdue'; daysBadge = `<span class="badge-days days-over">Просрочено ${Math.abs(diff)} дн.</span>`; }
-      else if (diff === 0) { cardClass += ' urgent'; daysBadge = `<span class="badge-days days-warn">СЕГОДНЯ (${formatDateRu(t.deadline)})</span>`; }
-      else if (diff <= 3) { cardClass += ' urgent'; daysBadge = `<span class="badge-days days-warn">Осталось ${diff} дн.</span>`; }
-      else { daysBadge = `<span class="badge-days ${t.status === 'court' ? 'days-court' : 'days-ok'}">Через ${diff} дн. (${formatDateRu(t.deadline)})</span>`; }
-    }
-
-    const caseHtml = t.caseNum ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')">📋 ${escapeHtml(t.caseNum)}</span>` : '';
-    const logsHtml = (t.logs && t.logs.length > 0) ? `<div class="log-box">${t.logs.slice(-3).map(l => `<div class="log-item"><span class="log-date">${escapeHtml(l.date)}:</span> ${escapeHtml(l.text)}</div>`).join('')}</div>` : '';
-    const attsHtml = (t.attachments && t.attachments.length > 0) ? `<div class="att-strip">${t.attachments.map((att, idx) => `<span class="att-chip" onclick="openAttachment('${escapeJs(t.id)}', ${idx})">📎 ${escapeHtml(att.name)}</span>`).join('')}</div>` : '';
-
-    return `<div class="${cardClass}"><div class="card-top"><div class="badges-left"><span class="badge-lfo">${escapeHtml(t.lfo || 'Без ЛФО')}</span>${statusBadge}</div>${daysBadge}</div><div class="card-title">${escapeHtml(t.debtor)}</div><div class="meta-row">${caseHtml} ${t.organ ? `• <strong>${escapeHtml(t.organ)}</strong>` : ''}</div>${t.desc ? `<div class="card-desc">${escapeHtml(t.desc)}</div>` : ''}${logsHtml}${attsHtml}${t.status !== 'done' ? `<div class="quick-ext-row"><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 14)">+14 дн.</button><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 45)">+45 дн. (жалоба)</button></div>` : ''}<div class="card-footer">${t.link ? `<a class="btn-link" href="${escapeHtml(t.link)}" target="_blank">🔗 Карточка</a>` : ''}<div class="card-btns"><button class="btn-sm" onclick="openModal('${escapeJs(t.id)}')">✏️</button><button class="btn-sm btn-done" onclick="toggleDone('${escapeJs(t.id)}')">${t.status === 'done' ? '↩️' : '✅'}</button><button class="btn-sm btn-del" onclick="removeTask('${escapeJs(t.id)}')">🗑️</button></div></div></div>`;
-  }).join('');
-}
-function openModal(id = null) {
-  tempAttachments = [];
-  document.getElementById('fNewLog').value = '';
-  document.getElementById('fAttInput').value = '';
-  if (id) {
-    const t = tasks.find(x => x.id === id);
-    if (!t) return;
-    document.getElementById('modalTitle').textContent = 'Редактировать дело';
-    document.getElementById('fId').value = t.id;
-    document.getElementById('fStatus').value = t.status || 'work';
-    document.getElementById('fCategory').value = t.category || 'ИП / ФССП';
-    document.getElementById('fLfo').value = t.lfo || '';
-    document.getElementById('fCaseNum').value = t.caseNum || '';
-    document.getElementById('fDebtor').value = t.debtor || '';
-    document.getElementById('fOrgan').value = t.organ || '';
-    document.getElementById('fDeadline').value = t.deadline || '';
-    document.getElementById('fCourtTime').value = t.courtTime || '10:00';
-    document.getElementById('fDesc').value = t.desc || '';
-    document.getElementById('fLink').value = t.link || '';
-    tempAttachments = JSON.parse(JSON.stringify(t.attachments || []));
-  } else {
-    document.getElementById('modalTitle').textContent = 'Новое дело';
-    document.getElementById('fId').value = '';
-    document.getElementById('fStatus').value = 'work';
-    document.getElementById('fCategory').value = 'ИП / ФССП';
-    document.getElementById('fLfo').value = '';
-    document.getElementById('fCaseNum').value = '';
-    document.getElementById('fDebtor').value = '';
-    document.getElementById('fOrgan').value = '';
-    const d = new Date(); d.setDate(d.getDate() + 45);
-    document.getElementById('fDeadline').value = d.toISOString().slice(0, 10);
-    document.getElementById('fCourtTime').value = '10:00';
-    document.getElementById('fDesc').value = '';
-    document.getElementById('fLink').value = '';
-  }
-  renderEditAttachments();
-  document.getElementById('modalBg').classList.add('open');
-}
-
-function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
-function addDaysToInput(days) { const inp = document.getElementById('fDeadline'); const base = inp.value ? new Date(inp.value + 'T00:00:00') : new Date(); base.setDate(base.getDate() + days); inp.value = base.toISOString().slice(0, 10); }
-function handleFileAttach(e) { Array.from(e.target.files || []).forEach(file => { const r = new FileReader(); r.onload = (ev) => { tempAttachments.push({ name: file.name, type: file.type, dataUrl: ev.target.result }); renderEditAttachments(); }; r.readAsDataURL(file); }); }
-function renderEditAttachments() { document.getElementById('attEditList').innerHTML = tempAttachments.map((att, idx) => `<div class="att-edit-item"><span>📎 ${escapeHtml(att.name)}</span><button type="button" class="btn-sm btn-del" onclick="tempAttachments.splice(${idx},1);renderEditAttachments()">✕</button></div>`).join(''); }
-function openAttachment(taskId, idx) { const t = tasks.find(x => x.id === taskId); if (!t || !t.attachments || !t.attachments[idx]) return; const att = t.attachments[idx]; const win = window.open(); if (win) win.document.write(`<iframe src="${att.dataUrl}" frameborder="0" style="border:0;width:100%;height:100%;"></iframe>`); else { const a = document.createElement('a'); a.href = att.dataUrl; a.download = att.name; a.click(); } }
-
-async function saveTask() {
-  const id = document.getElementById('fId').value || ('case_' + Date.now());
-  const existing = tasks.find(x => x.id === id);
-  const logs = existing ? [...(existing.logs || [])] : [];
-  const newLogText = document.getElementById('fNewLog').value.trim();
-  if (newLogText) logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: newLogText });
-  await dbPut({ id, status: document.getElementById('fStatus').value, category: document.getElementById('fCategory').value, lfo: document.getElementById('fLfo').value.trim() || 'Без ЛФО', caseNum: document.getElementById('fCaseNum').value.trim(), debtor: document.getElementById('fDebtor').value.trim() || 'Без названия', organ: document.getElementById('fOrgan').value.trim(), deadline: document.getElementById('fDeadline').value, courtTime: document.getElementById('fCourtTime').value, desc: document.getElementById('fDesc').value.trim(), link: document.getElementById('fLink').value.trim(), logs, attachments: tempAttachments, createdAt: existing ? existing.createdAt : Date.now() });
-  closeModal(); await loadAllTasks(); showToast('Дело сохранено');
-}
-
-async function extendTask(id, days) { const t = tasks.find(x => x.id === id); if (!t) return; const base = t.deadline ? new Date(t.deadline + 'T00:00:00') : new Date(); const today = new Date(); today.setHours(0, 0, 0, 0); const start = base < today ? today : base; start.setDate(start.getDate() + days); t.deadline = start.toISOString().slice(0, 10); if (t.status === 'unassigned') t.status = 'work'; t.logs = t.logs || []; t.logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: `Срок продлён на +${days} дн. (до ${formatDateRu(t.deadline)})` }); await dbPut(t); await loadAllTasks(); showToast(`Продлено на +${days} дн.`); }
-async function toggleDone(id) { const t = tasks.find(x => x.id === id); if (!t) return; t.status = t.status === 'done' ? 'work' : 'done'; await dbPut(t); await loadAllTasks(); showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу'); }
-async function removeTask(id) { if (!confirm('Удалить это дело?')) return; await dbDelete(id); await loadAllTasks(); showToast('Удалено'); }
-
-function handleExcelImport(e) {
-  const file = e.target.files[0]; if (!file || typeof XLSX === 'undefined') { showToast('Модуль Excel ещё грузится'); return; }
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    try {
-      const wb = XLSX.read(ev.target.result, { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-      let added = 0;
-      for (const r of rows) {
-        const debtor = r['Должник'] || r['ФИО'] || r['Наименование'] || Object.values(r)[0]; if (!debtor) continue;
-        const d = new Date(); d.setDate(d.getDate() + 45);
-        await dbPut({ id: 'xl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), status: 'work', category: 'ИП / ФССП', lfo: String(r['ЛФО'] || r['Взыскатель'] || 'Импорт Excel').trim(), caseNum: String(r['№ ИП'] || r['Номер дела'] || r['Дело'] || '').trim(), debtor: String(debtor).trim(), organ: String(r['РОСП'] || r['Суд'] || r['Орган'] || '').trim(), deadline: d.toISOString().slice(0, 10), courtTime: '10:00', desc: String(r['Комментарий'] || r['Примечание'] || '').trim(), link: '', logs: [], attachments: [], createdAt: Date.now() });
-        added++;
-      }
-      await loadAllTasks(); showToast(`Загружено из Excel: ${added} дел`);
-    } catch (err) { showToast('Ошибка чтения файла Excel'); }
-    e.target.value = '';
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function exportBackup() { const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `lawyer_planner_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); showToast('Резервная копия скачана'); }
-function handleBackupRestore(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async (ev) => { try { const arr = JSON.parse(ev.target.result); if (Array.isArray(arr)) { for (const item of arr) if (item.id) await dbPut(item); await loadAllTasks(); showToast(`Восстановлено: ${arr.length}`); } } catch (err) { showToast('Неверный файл бэкапа'); } e.target.value = ''; }; reader.readAsText(file); }
-function copyText(txt) { if (navigator.clipboard) navigator.clipboard.writeText(txt); showToast('Скопировано: ' + txt); }
-function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2500); }
-function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-function escapeJs(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-window.addEventListener('DOMContentLoaded', () => { initDB().catch(() => showToast('Ошибка БД')); });
-</script>
-</body>
-</html>
