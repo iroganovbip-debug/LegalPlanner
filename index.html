@@ -132,20 +132,20 @@
     <select id="lfoFilter" class="lfo-select" onchange="render()"><option value="all">Все ЛФО (0)</option></select>
   </div>
   <div class="filters">
-    <button class="chip active" data-f="all" onclick="setFilter('all', this)">Все активные</button>
-    <button class="chip" data-f="overdue" onclick="setFilter('overdue', this)">🔥 Просрочено</button>
-    <button class="chip" data-f="urgent" onclick="setFilter('urgent', this)">⏰ Срочно</button>
-    <button class="chip" data-f="court" onclick="setFilter('court', this)">⚖️ Суды</button>
-    <button class="chip" data-f="unassigned" onclick="setFilter('unassigned', this)">⏳ Без даты</button>
-    <button class="chip" data-f="done" onclick="setFilter('done', this)">✅ Завершённые</button>
+    <button type="button" class="chip active" data-f="all" onclick="setFilter('all', this)">Все активные</button>
+    <button type="button" class="chip" data-f="overdue" onclick="setFilter('overdue', this)">🔥 Просрочено</button>
+    <button type="button" class="chip" data-f="urgent" onclick="setFilter('urgent', this)">⏰ Срочно</button>
+    <button type="button" class="chip" data-f="court" onclick="setFilter('court', this)">⚖️ Суды</button>
+    <button type="button" class="chip" data-f="unassigned" onclick="setFilter('unassigned', this)">⏳ Без даты</button>
+    <button type="button" class="chip" data-f="done" onclick="setFilter('done', this)">✅ Завершённые</button>
   </div>
 </div>
 <div id="taskList" class="list"></div>
-<button class="fab" onclick="openModal()">+ Новое дело</button>
+<button class="fab" type="button" onclick="openModal()">+ Новое дело</button>
 
 <div id="modalBg" class="modal-bg" onclick="if(event.target===this) closeModal()">
   <div class="modal">
-    <div class="modal-hdr"><h2 id="modalTitle">Новое дело / задача</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
+    <div class="modal-hdr"><h2 id="modalTitle">Новое дело / задача</h2><button class="close-btn" type="button" onclick="closeModal()">&times;</button></div>
     <input type="hidden" id="fId">
     <div class="field-row">
       <div class="field"><label>Статус</label><select id="fStatus"><option value="work">В работе (ИП / запрос)</option><option value="court">Судебное заседание</option><option value="unassigned">Не назначено (ждём дату)</option><option value="done">Завершено</option></select></div>
@@ -171,97 +171,170 @@
     <div class="field"><label>Ссылка (КАД / Госуслуги / ФССП)</label><input type="url" id="fLink" placeholder="https://arbitr.ru..."></div>
     <div class="field"><label>Добавить запись в историю действий (необязательно)</label><input type="text" id="fNewLog" placeholder="Напр. Отправлен запрос приставу через ГУ"></div>
     <div class="field"><label>Прикрепить фото или PDF (хранится в телефоне)</label><input type="file" id="fAttInput" accept="image/*,.pdf" multiple onchange="handleFileAttach(event)"><div id="attEditList" class="att-edit-list"></div></div>
-    <button class="btn-save" onclick="saveTask()">Сохранить дело</button>
-    <button class="btn-sec" onclick="closeModal()">Отмена</button>
+    <button class="btn-save" type="button" onclick="saveTask()">Сохранить дело</button>
+    <button class="btn-sec" type="button" onclick="closeModal()">Отмена</button>
   </div>
 </div>
-
 <div id="viewModalBg" class="modal-bg" onclick="if(event.target===this) closeViewModal()">
   <div class="modal">
-    <div class="modal-hdr"><h2 id="vTitle">Карточка дела</h2><button class="close-btn" onclick="closeViewModal()">&times;</button></div>
+    <div class="modal-hdr">
+      <h2 id="vTitle">Карточка дела</h2>
+      <button class="close-btn" type="button" onclick="closeViewModal()">&times;</button>
+    </div>
     <div id="vBody"></div>
     <div style="display:flex; gap:8px; margin-top:10px;">
-      <button class="btn-save" style="margin:0;" id="vEditBtn">✏️ Редактировать</button>
-      <button class="btn-sec" style="margin:0;" onclick="closeViewModal()">Закрыть</button>
+      <button class="btn-save" type="button" style="margin:0;" id="vEditBtn">✏️ Редактировать</button>
+      <button class="btn-sec" type="button" style="margin:0;" onclick="closeViewModal()">Закрыть</button>
     </div>
   </div>
 </div>
 
 <div id="lightbox" class="lightbox">
-  <div class="lb-top"><span id="lbName" style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Файл</span><button class="close-btn" style="color:#fff; font-size:28px;" onclick="closeLightbox()">&times;</button></div>
+  <div class="lb-top">
+    <span id="lbName" style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Файл</span>
+    <button class="close-btn" type="button" style="color:#fff; font-size:28px;" onclick="closeLightbox()">&times;</button>
+  </div>
   <div id="lbContent" style="display:flex; flex:1; align-items:center; justify-content:center;"></div>
 </div>
+
 <div id="toast" class="toast"></div>
+
 <script>
-const DB_NAME = 'LegalPlannerDB_v1';
-const STORE_NAME = 'cases';
-let db = null, tasks = [], currentFilter = 'all', tempAttachments = [];
+var DB_NAME = 'LegalPlannerDB_v1';
+var STORE_NAME = 'cases';
+var db = null;
+var tasks = [];
+var currentFilter = 'all';
+var tempAttachments = [];
 
 function initDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = (e) => {
-      if (!e.target.result.objectStoreNames.contains(STORE_NAME)) {
-        e.target.result.createObjectStore(STORE_NAME, { keyPath: 'id' });
+  return new Promise(function(resolve, reject) {
+    var req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = function(e) {
+      var database = e.target.result;
+      if (!database.objectStoreNames.contains(STORE_NAME)) {
+        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
       }
     };
-    req.onsuccess = async (e) => { db = e.target.result; await loadAllTasks(); resolve(); };
-    req.onerror = (e) => reject(e);
+    req.onsuccess = function(e) {
+      db = e.target.result;
+      loadAllTasks().then(resolve);
+    };
+    req.onerror = function(e) { reject(e); };
   });
 }
 
-function dbPut(item) { return new Promise((res, rej) => { const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).put(item); tx.oncomplete = () => res(); tx.onerror = (e) => rej(e); }); }
-function dbDelete(id) { return new Promise((res, rej) => { const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).delete(id); tx.oncomplete = () => res(); tx.onerror = (e) => rej(e); }); }
-function loadAllTasks() { return new Promise((res) => { const tx = db.transaction(STORE_NAME, 'readonly'); const req = tx.objectStore(STORE_NAME).getAll(); req.onsuccess = () => { tasks = req.result || []; updateLfoLists(); render(); res(); }; }); }
+function dbPut(item) {
+  return new Promise(function(res, rej) {
+    var tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(item);
+    tx.oncomplete = function() { res(); };
+    tx.onerror = function(e) { rej(e); };
+  });
+}
 
+function dbDelete(id) {
+  return new Promise(function(res, rej) {
+    var tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(id);
+    tx.oncomplete = function() { res(); };
+    tx.onerror = function(e) { rej(e); };
+  });
+}
+
+function loadAllTasks() {
+  return new Promise(function(res) {
+    var tx = db.transaction(STORE_NAME, 'readonly');
+    var req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = function() {
+      tasks = req.result || [];
+      updateLfoLists();
+      render();
+      res();
+    };
+  });
+}
 function getDaysDiff(dateStr) {
   if (!dateStr) return null;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr + 'T00:00:00');
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var target = new Date(dateStr + 'T00:00:00');
   return Math.round((target - today) / (1000 * 60 * 60 * 24));
 }
 
 function formatDateRu(dateStr) {
   if (!dateStr) return 'не указана';
-  const [y, m, d] = dateStr.split('-');
-  return `${d}.${m}.${y}`;
+  var s = String(dateStr);
+  if (s.length < 10) return s;
+  return s.slice(8, 10) + '.' + s.slice(5, 7) + '.' + s.slice(0, 4);
 }
 
 function updateLfoLists() {
-  const lfos = [...new Set(tasks.map(t => (t.lfo || '').trim()).filter(Boolean))].sort();
-  const sel = document.getElementById('lfoFilter');
-  const currentVal = sel.value;
-  sel.innerHTML = '<option value="all">Все ЛФО (' + lfos.length + ')</option>' + lfos.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
-  if (lfos.includes(currentVal)) sel.value = currentVal;
-  document.getElementById('lfoSuggestions').innerHTML = lfos.map(l => `<option value="${escapeHtml(l)}">`).join('');
+  var map = {};
+  for (var i = 0; i < tasks.length; i++) {
+    var val = (tasks[i].lfo || '').trim();
+    if (val) map[val] = true;
+  }
+  var lfos = Object.keys(map).sort();
+  var sel = document.getElementById('lfoFilter');
+  var currentVal = sel.value;
+  var opts = '<option value="all">Все ЛФО (' + lfos.length + ')</option>';
+  var dlOpts = '';
+  for (var j = 0; j < lfos.length; j++) {
+    var esc = escapeHtml(lfos[j]);
+    opts += '<option value="' + esc + '">' + esc + '</option>';
+    dlOpts += '<option value="' + esc + '">';
+  }
+  sel.innerHTML = opts;
+  if (map[currentVal]) sel.value = currentVal;
+  document.getElementById('lfoSuggestions').innerHTML = dlOpts;
 }
 
 function setFilter(f, btn) {
   currentFilter = f;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  var chips = document.querySelectorAll('.chip');
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].classList.remove('active');
+  }
   if (btn) btn.classList.add('active');
   render();
 }
 
-function quickTab(f) { setFilter(f, document.querySelector(`.chip[data-f="${f}"]`)); }
+function quickTab(f) {
+  var chip = document.querySelector('.chip[data-f="' + f + '"]');
+  setFilter(f, chip);
+}
+
+function onCardClick(ev, id) {
+  var el = ev.target;
+  while (el && el !== ev.currentTarget) {
+    var tag = (el.tagName || '').toUpperCase();
+    if (tag === 'BUTTON' || tag === 'A' || el.classList.contains('case-copy') || el.classList.contains('att-chip')) {
+      return;
+    }
+    el = el.parentElement;
+  }
+  openViewModal(id);
+}
 
 function render() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  const lfoVal = document.getElementById('lfoFilter').value;
-  let cntTotal = 0, cntCourt = 0, cntWait = 0, cntUrgent = 0, cntOver = 0;
+  var q = document.getElementById('searchInput').value.trim().toLowerCase();
+  var lfoVal = document.getElementById('lfoFilter').value;
+  var cntTotal = 0, cntCourt = 0, cntWait = 0, cntUrgent = 0, cntOver = 0;
 
-  tasks.forEach(t => {
-    if (t.status !== 'done') {
+  for (var i = 0; i < tasks.length; i++) {
+    var item = tasks[i];
+    if (item.status !== 'done') {
       cntTotal++;
-      if (t.status === 'court') cntCourt++;
-      if (t.status === 'unassigned') cntWait++;
-      if (t.status !== 'unassigned' && t.deadline) {
-        const d = getDaysDiff(t.deadline);
+      if (item.status === 'court') cntCourt++;
+      if (item.status === 'unassigned') cntWait++;
+      if (item.status !== 'unassigned' && item.deadline) {
+        var d = getDaysDiff(item.deadline);
         if (d < 0) cntOver++;
         else if (d <= 3) cntUrgent++;
       }
     }
-  });
+  }
 
   document.getElementById('stTotal').textContent = cntTotal;
   document.getElementById('stCourt').textContent = cntCourt;
@@ -269,71 +342,164 @@ function render() {
   document.getElementById('stUrgent').textContent = cntUrgent;
   document.getElementById('stOver').textContent = cntOver;
 
-  let filtered = tasks.filter(t => {
-    if (lfoVal !== 'all' && (t.lfo || '').trim() !== lfoVal) return false;
-    if (q && !`${t.lfo} ${t.debtor} ${t.caseNum} ${t.organ} ${t.desc} ${t.category}`.toLowerCase().includes(q)) return false;
-    const diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
-    if (currentFilter === 'all') return t.status !== 'done';
-    if (currentFilter === 'court') return t.status === 'court';
-    if (currentFilter === 'unassigned') return t.status === 'unassigned';
-    if (currentFilter === 'urgent') return t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff >= 0 && diff <= 3;
-    if (currentFilter === 'overdue') return t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff < 0;
-    if (currentFilter === 'done') return t.status === 'done';
-    return true;
-  });
-
-  filtered.sort((a, b) => {
+  var filtered = [];
+  for (var k = 0; k < tasks.length; k++) {
+    var t = tasks[k];
+    if (lfoVal !== 'all' && (t.lfo || '').trim() !== lfoVal) continue;
+    if (q) {
+      var hay = ((t.lfo || '') + ' ' + (t.debtor || '') + ' ' + (t.caseNum || '') + ' ' + (t.organ || '') + ' ' + (t.desc || '') + ' ' + (t.category || '')).toLowerCase();
+      if (hay.indexOf(q) === -1) continue;
+    }
+    var diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
+    var keep = true;
+    if (currentFilter === 'all') keep = (t.status !== 'done');
+    else if (currentFilter === 'court') keep = (t.status === 'court');
+    else if (currentFilter === 'unassigned') keep = (t.status === 'unassigned');
+    else if (currentFilter === 'urgent') keep = (t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff >= 0 && diff <= 3);
+    else if (currentFilter === 'overdue') keep = (t.status !== 'done' && t.status !== 'unassigned' && diff !== null && diff < 0);
+    else if (currentFilter === 'done') keep = (t.status === 'done');
+    if (keep) filtered.push(t);
+  }
+  filtered.sort(function(a, b) {
     if (a.status === 'done' && b.status !== 'done') return 1;
     if (b.status === 'done' && a.status !== 'done') return -1;
-    const da = (a.status !== 'unassigned' && a.deadline) ? getDaysDiff(a.deadline) : 9999;
-    const dbVal = (b.status !== 'unassigned' && b.deadline) ? getDaysDiff(b.deadline) : 9999;
+    var da = (a.status !== 'unassigned' && a.deadline) ? getDaysDiff(a.deadline) : 9999;
+    var dbVal = (b.status !== 'unassigned' && b.deadline) ? getDaysDiff(b.deadline) : 9999;
     return da - dbVal;
   });
 
-  const container = document.getElementById('taskList');
+  var container = document.getElementById('taskList');
   if (!container) return;
-  if (filtered.length === 0) { container.innerHTML = '<div class="empty">По выбранному фильтру дел нет.<br>Нажмите «+ Новое дело» в правом нижнем углу.</div>'; return; }
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty">По выбранному фильтру дел нет.<br>Нажмите «+ Новое дело» в правом нижнем углу.</div>';
+    return;
+  }
 
-  container.innerHTML = filtered.map(t => {
-    const diff = (t.status !== 'unassigned' && t.deadline) ? getDaysDiff(t.deadline) : null;
-    let cardClass = 'card', daysBadge = '', statusBadge = '';
-    if (t.status === 'done') { cardClass += ' done'; statusBadge = '<span class="badge-status st-done">✅ Завершено</span>'; }
-    else if (t.status === 'court') { cardClass += ' court'; statusBadge = `<span class="badge-status st-court">⚖️ Суд ${t.courtTime || ''}</span>`; }
-    else if (t.status === 'unassigned') { cardClass += ' unassigned'; statusBadge = '<span class="badge-status st-wait">⏳ Не назначено</span>'; daysBadge = '<span class="badge-days days-wait">Ожидает дату</span>'; }
-    else { statusBadge = `<span class="badge-status st-work">${escapeHtml(t.category || 'В работе')}</span>`; }
+  var html = '';
+  for (var m = 0; m < filtered.length; m++) {
+    var c = filtered[m];
+    var cDiff = (c.status !== 'unassigned' && c.deadline) ? getDaysDiff(c.deadline) : null;
+    var cardClass = 'card';
+    var daysBadge = '';
+    var statusBadge = '';
 
-    if (t.status !== 'done' && t.status !== 'unassigned' && diff !== null) {
-      if (diff < 0) { cardClass += ' overdue'; daysBadge = `<span class="badge-days days-over">Просрочено ${Math.abs(diff)} дн.</span>`; }
-      else if (diff === 0) { cardClass += ' urgent'; daysBadge = `<span class="badge-days days-warn">СЕГОДНЯ (${formatDateRu(t.deadline)})</span>`; }
-      else if (diff <= 3) { cardClass += ' urgent'; daysBadge = `<span class="badge-days days-warn">Осталось ${diff} дн.</span>`; }
-      else { daysBadge = `<span class="badge-days ${t.status === 'court' ? 'days-court' : 'days-ok'}">Через ${diff} дн. (${formatDateRu(t.deadline)})</span>`; }
+    if (c.status === 'done') {
+      cardClass += ' done';
+      statusBadge = '<span class="badge-status st-done">✅ Завершено</span>';
+    } else if (c.status === 'court') {
+      cardClass += ' court';
+      statusBadge = '<span class="badge-status st-court">⚖️ Суд ' + escapeHtml(c.courtTime || '') + '</span>';
+    } else if (c.status === 'unassigned') {
+      cardClass += ' unassigned';
+      statusBadge = '<span class="badge-status st-wait">⏳ Не назначено</span>';
+      daysBadge = '<span class="badge-days days-wait">Ожидает дату</span>';
+    } else {
+      statusBadge = '<span class="badge-status st-work">' + escapeHtml(c.category || 'В работе') + '</span>';
     }
 
-    const caseHtml = t.caseNum ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')">📋 ${escapeHtml(t.caseNum)}</span>` : '';
-    const logsHtml = (t.logs && t.logs.length > 0) ? `<div class="log-box">${t.logs.slice(-2).map(l => `<div class="log-item"><span class="log-date">${escapeHtml(l.date)}:</span> ${escapeHtml(l.text)}</div>`).join('')}</div>` : '';
-    const attsHtml = (t.attachments && t.attachments.length > 0) ? `<div class="att-strip">${t.attachments.map((att, idx) => `<span class="att-chip" onclick="openAttachment('${escapeJs(t.id)}', ${idx})">📎 ${escapeHtml(att.name)}</span>`).join('')}</div>` : '';
+    if (c.status !== 'done' && c.status !== 'unassigned' && cDiff !== null) {
+      if (cDiff < 0) {
+        cardClass += ' overdue';
+        daysBadge = '<span class="badge-days days-over">Просрочено ' + Math.abs(cDiff) + ' дн.</span>';
+      } else if (cDiff === 0) {
+        cardClass += ' urgent';
+        daysBadge = '<span class="badge-days days-warn">СЕГОДНЯ (' + formatDateRu(c.deadline) + ')</span>';
+      } else if (cDiff <= 3) {
+        cardClass += ' urgent';
+        daysBadge = '<span class="badge-days days-warn">Осталось ' + cDiff + ' дн.</span>';
+      } else {
+        var bCls = (c.status === 'court') ? 'days-court' : 'days-ok';
+        daysBadge = '<span class="badge-days ' + bCls + '">Через ' + cDiff + ' дн. (' + formatDateRu(c.deadline) + ')</span>';
+      }
+    }
 
-    return `<div class="${cardClass}" onclick="if(!event.target.closest('button,a,.case-copy,.att-chip')) openViewModal('${escapeJs(t.id)}')"><div class="card-top"><div class="badges-left"><span class="badge-lfo">${escapeHtml(t.lfo || 'Без ЛФО')}</span>${statusBadge}</div>${daysBadge}</div><div class="card-title">${escapeHtml(t.debtor)}</div><div class="meta-row">${caseHtml} ${t.organ ? `• <strong>${escapeHtml(t.organ)}</strong>` : ''}</div>${t.desc ? `<div class="card-desc">${escapeHtml(t.desc)}</div>` : ''}${logsHtml}${attsHtml}${t.status !== 'done' ? `<div class="quick-ext-row"><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 14)">+14 дн.</button><button class="btn-ext" onclick="extendTask('${escapeJs(t.id)}', 45)">+45 дн. (жалоба)</button></div>` : ''}<div class="card-footer">${t.link ? `<a class="btn-link" href="${escapeHtml(t.link)}" target="_blank">🔗 Карточка</a>` : ''}<div class="card-btns"><button class="btn-sm" onclick="openModal('${escapeJs(t.id)}')">✏️</button><button class="btn-sm btn-done" onclick="toggleDone('${escapeJs(t.id)}')">${t.status === 'done' ? '↩️' : '✅'}</button><button class="btn-sm btn-del" onclick="removeTask('${escapeJs(t.id)}')">🗑️</button></div></div></div>`;
-  }).join('');
+    var idJs = escapeJs(c.id);
+    var caseHtml = c.caseNum ? '<span class="case-copy" onclick="copyText(\'' + escapeJs(c.caseNum) + '\')">📋 ' + escapeHtml(c.caseNum) + '</span>' : '';
+    var logsHtml = '';
+    if (c.logs && c.logs.length > 0) {
+      var recentLogs = c.logs.slice(-2);
+      logsHtml = '<div class="log-box">';
+      for (var lg = 0; lg < recentLogs.length; lg++) {
+        logsHtml += '<div class="log-item"><span class="log-date">' + escapeHtml(recentLogs[lg].date) + ':</span> ' + escapeHtml(recentLogs[lg].text) + '</div>';
+      }
+      logsHtml += '</div>';
+    }
+
+    var attsHtml = '';
+    if (c.attachments && c.attachments.length > 0) {
+      attsHtml = '<div class="att-strip">';
+      for (var at = 0; at < c.attachments.length; at++) {
+        attsHtml += '<span class="att-chip" onclick="openAttachment(\'' + idJs + '\', ' + at + ')">📎 ' + escapeHtml(c.attachments[at].name) + '</span>';
+      }
+      attsHtml += '</div>';
+    }
+
+    html += '<div class="' + cardClass + '" onclick="onCardClick(event, \'' + idJs + '\')">' +
+      '<div class="card-top"><div class="badges-left"><span class="badge-lfo">' + escapeHtml(c.lfo || 'Без ЛФО') + '</span>' + statusBadge + '</div>' + daysBadge + '</div>' +
+      '<div class="card-title">' + escapeHtml(c.debtor) + '</div>' +
+      '<div class="meta-row">' + caseHtml + (c.organ ? ' • <strong>' + escapeHtml(c.organ) + '</strong>' : '') + '</div>' +
+      (c.desc ? '<div class="card-desc">' + escapeHtml(c.desc) + '</div>' : '') +
+      logsHtml + attsHtml +
+      (c.status !== 'done' ? '<div class="quick-ext-row"><button type="button" class="btn-ext" onclick="extendTask(\'' + idJs + '\', 14)">+14 дн.</button><button type="button" class="btn-ext" onclick="extendTask(\'' + idJs + '\', 45)">+45 дн. (жалоба)</button></div>' : '') +
+      '<div class="card-footer">' +
+        (c.link ? '<a class="btn-link" href="' + escapeHtml(c.link) + '" target="_blank">🔗 Карточка</a>' : '') +
+        '<div class="card-btns">' +
+          '<button type="button" class="btn-sm" onclick="openModal(\'' + idJs + '\')">✏️</button>' +
+          '<button type="button" class="btn-sm btn-done" onclick="toggleDone(\'' + idJs + '\')">' + (c.status === 'done' ? '↩️' : '✅') + '</button>' +
+          '<button type="button" class="btn-sm btn-del" onclick="removeTask(\'' + idJs + '\')">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
 }
+function findTaskById(id) {
+  for (var i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === id) return tasks[i];
+  }
+  return null;
+}
+
 function openViewModal(id) {
-  const t = tasks.find(x => x.id === id);
+  var t = findTaskById(id);
   if (!t) return;
   document.getElementById('vTitle').textContent = t.debtor;
-  const logsHtml = (t.logs && t.logs.length) ? t.logs.map(l => `<div class="log-item"><span class="log-date">${escapeHtml(l.date)}:</span> ${escapeHtml(l.text)}</div>`).join('') : '<span style="color:var(--muted)">Записей пока нет</span>';
-  const attsHtml = (t.attachments && t.attachments.length) ? `<div class="att-strip">${t.attachments.map((att, idx) => `<span class="att-chip" onclick="openAttachment('${escapeJs(t.id)}', ${idx})">📎 ${escapeHtml(att.name)}</span>`).join('')}</div>` : '<span style="color:var(--muted)">Файлы не прикреплены</span>';
-  document.getElementById('vBody').innerHTML = `
-    <div class="view-box">
-      <div class="view-lbl">ЛФО / Взыскатель и Категория</div><div class="view-val">${escapeHtml(t.lfo)} • ${escapeHtml(t.category)}</div>
-      <div class="view-lbl">№ дела / ИП</div><div class="view-val">${t.caseNum ? `<span class="case-copy" onclick="copyText('${escapeJs(t.caseNum)}')">📋 ${escapeHtml(t.caseNum)}</span>` : 'Не указан'}</div>
-      <div class="view-lbl">Орган (Суд / РОСП)</div><div class="view-val">${escapeHtml(t.organ || 'Не указан')}</div>
-      <div class="view-lbl">Срок / Дата заседания</div><div class="view-val">${t.deadline ? formatDateRu(t.deadline) : 'Не назначено'} ${t.status === 'court' && t.courtTime ? 'в ' + escapeHtml(t.courtTime) : ''}</div>
-    </div>
-    ${t.desc ? `<div class="view-lbl">Описание / Суть задачи</div><div class="card-desc" style="margin-bottom:10px;">${escapeHtml(t.desc)}</div>` : ''}
-    <div class="view-lbl">Вложения (нажмите для просмотра / скачивания)</div><div style="margin-bottom:10px;">${attsHtml}</div>
-    <div class="view-lbl">История действий</div><div class="log-box" style="margin-bottom:10px;">${logsHtml}</div>
-    ${t.link ? `<a class="btn-link" style="width:100%; justify-content:center; padding:10px;" href="${escapeHtml(t.link)}" target="_blank">🔗 Открыть внешнюю ссылку</a>` : ''}`;
-  document.getElementById('vEditBtn').onclick = () => { closeViewModal(); openModal(id); };
+  var idJs = escapeJs(t.id);
+
+  var logsHtml = '<span style="color:var(--muted)">Записей пока нет</span>';
+  if (t.logs && t.logs.length > 0) {
+    logsHtml = '';
+    for (var i = 0; i < t.logs.length; i++) {
+      logsHtml += '<div class="log-item"><span class="log-date">' + escapeHtml(t.logs[i].date) + ':</span> ' + escapeHtml(t.logs[i].text) + '</div>';
+    }
+  }
+
+  var attsHtml = '<span style="color:var(--muted)">Файлы не прикреплены</span>';
+  if (t.attachments && t.attachments.length > 0) {
+    attsHtml = '<div class="att-strip">';
+    for (var j = 0; j < t.attachments.length; j++) {
+      attsHtml += '<span class="att-chip" onclick="openAttachment(\'' + idJs + '\', ' + j + ')">📎 ' + escapeHtml(t.attachments[j].name) + '</span>';
+    }
+    attsHtml += '</div>';
+  }
+
+  var timePart = (t.status === 'court' && t.courtTime) ? (' в ' + escapeHtml(t.courtTime)) : '';
+  var bodyHtml = '<div class="view-box">' +
+    '<div class="view-lbl">ЛФО / Взыскатель и Категория</div><div class="view-val">' + escapeHtml(t.lfo) + ' • ' + escapeHtml(t.category) + '</div>' +
+    '<div class="view-lbl">№ дела / ИП</div><div class="view-val">' + (t.caseNum ? '<span class="case-copy" onclick="copyText(\'' + escapeJs(t.caseNum) + '\')">📋 ' + escapeHtml(t.caseNum) + '</span>' : 'Не указан') + '</div>' +
+    '<div class="view-lbl">Орган (Суд / РОСП)</div><div class="view-val">' + escapeHtml(t.organ || 'Не указан') + '</div>' +
+    '<div class="view-lbl">Срок / Дата заседания</div><div class="view-val">' + (t.deadline ? formatDateRu(t.deadline) : 'Не назначено') + timePart + '</div>' +
+  '</div>' +
+  (t.desc ? '<div class="view-lbl">Описание / Суть задачи</div><div class="card-desc" style="margin-bottom:10px;">' + escapeHtml(t.desc) + '</div>' : '') +
+  '<div class="view-lbl">Вложения (нажмите для просмотра / скачивания)</div><div style="margin-bottom:10px;">' + attsHtml + '</div>' +
+  '<div class="view-lbl">История действий</div><div class="log-box" style="margin-bottom:10px;">' + logsHtml + '</div>' +
+  (t.link ? '<a class="btn-link" style="width:100%; justify-content:center; padding:10px;" href="' + escapeHtml(t.link) + '" target="_blank">🔗 Открыть внешнюю ссылку</a>' : '');
+
+  document.getElementById('vBody').innerHTML = bodyHtml;
+  document.getElementById('vEditBtn').onclick = function() {
+    closeViewModal();
+    openModal(id);
+  };
   document.getElementById('viewModalBg').classList.add('open');
 }
 
@@ -341,81 +507,236 @@ function closeViewModal() { document.getElementById('viewModalBg').classList.rem
 function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
 
 function dataUrlToBlob(dataUrl) {
-  const parts = dataUrl.split(',');
-  const mime = parts.at(0).match(/:(.*?);/).at(1);
-  const raw = atob(parts.at(1));
-  const arr = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  var commaIdx = dataUrl.indexOf(',');
+  var header = dataUrl.slice(0, commaIdx);
+  var base64 = dataUrl.slice(commaIdx + 1);
+  var colonIdx = header.indexOf(':');
+  var semiIdx = header.indexOf(';');
+  var mime = (colonIdx !== -1 && semiIdx !== -1) ? header.slice(colonIdx + 1, semiIdx) : 'application/octet-stream';
+  var raw = atob(base64);
+  var arr = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) {
+    arr[i] = raw.charCodeAt(i);
+  }
   return new Blob([arr], { type: mime });
 }
 
-async function shareOrDownloadAtt(taskId, idx) {
-  const t = tasks.find(x => x.id === taskId);
+function shareOrDownloadAtt(taskId, idx) {
+  var t = findTaskById(taskId);
   if (!t || !t.attachments || !t.attachments[idx]) return;
-  const att = t.attachments[idx];
+  var att = t.attachments[idx];
   try {
-    const blob = dataUrlToBlob(att.dataUrl);
-    const file = new File([blob], att.name, { type: att.type || 'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: att.name }); return; }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = att.name;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    var blob = dataUrlToBlob(att.dataUrl);
+    var file = new File([blob], att.name, { type: att.type || 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: att.name }).catch(function() {});
+      return;
+    }
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = att.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     showToast('Файл передан на скачивание');
-  } catch (err) { showToast('Ошибка файла: ' + err.message); }
+  } catch (err) {
+    showToast('Ошибка файла: ' + err.message);
+  }
 }
 
 function openAttachment(taskId, idx) {
-  const t = tasks.find(x => x.id === taskId);
+  var t = findTaskById(taskId);
   if (!t || !t.attachments || !t.attachments[idx]) return;
-  const att = t.attachments[idx];
+  var att = t.attachments[idx];
   document.getElementById('lbName').textContent = att.name;
-  const box = document.getElementById('lbContent');
-  const isImg = (att.type && att.type.startsWith('image/')) || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+  var box = document.getElementById('lbContent');
+  var isImg = (att.type && att.type.indexOf('image/') === 0) || /\.(jpg|jpeg|png|webp|gif)$/i.test(att.name);
+  var idJs = escapeJs(taskId);
+
   if (isImg) {
-    box.innerHTML = `<div style="text-align:center;"><img class="lb-img" src="${att.dataUrl}"><div class="lb-btns"><button class="btn-save" style="width:auto; padding:9px 16px;" onclick="shareOrDownloadAtt('${escapeJs(taskId)}', ${idx})">📤 Сохранить / Поделиться</button></div></div>`;
+    box.innerHTML = '<div style="text-align:center;"><img class="lb-img" src="' + att.dataUrl + '"><div class="lb-btns"><button type="button" class="btn-save" style="width:auto; padding:9px 16px;" onclick="shareOrDownloadAtt(\'' + idJs + '\', ' + idx + ')">📤 Сохранить / Поделиться</button></div></div>';
   } else {
-    box.innerHTML = `<div class="lb-pdf-card"><div style="font-size:40px; margin-bottom:8px;">📄</div><div style="font-weight:700; margin-bottom:6px; word-break:break-word;">${escapeHtml(att.name)}</div><div style="font-size:12px; color:var(--muted);">Откройте PDF в системном просмотрщике или сохраните на телефон.</div><div class="lb-btns"><button class="btn-save" onclick="shareOrDownloadAtt('${escapeJs(taskId)}', ${idx})">📤 Открыть / Сохранить PDF</button></div></div>`;
+    box.innerHTML = '<div class="lb-pdf-card"><div style="font-size:40px; margin-bottom:8px;">📄</div><div style="font-weight:700; margin-bottom:6px; word-break:break-word;">' + escapeHtml(att.name) + '</div><div style="font-size:12px; color:var(--muted);">Откройте PDF в системном просмотрщике или сохраните на телефон.</div><div class="lb-btns"><button type="button" class="btn-save" onclick="shareOrDownloadAtt(\'' + idJs + '\', ' + idx + ')">📤 Открыть / Сохранить PDF</button></div></div>';
   }
   document.getElementById('lightbox').classList.add('open');
 }
-
-function openModal(id = null) {
-  tempAttachments = []; document.getElementById('fNewLog').value = ''; document.getElementById('fAttInput').value = '';
+function openModal(id) {
+  tempAttachments = [];
+  document.getElementById('fNewLog').value = '';
+  document.getElementById('fAttInput').value = '';
   if (id) {
-    const t = tasks.find(x => x.id === id); if (!t) return;
+    var t = findTaskById(id);
+    if (!t) return;
     document.getElementById('modalTitle').textContent = 'Редактировать дело';
-    document.getElementById('fId').value = t.id; document.getElementById('fStatus').value = t.status || 'work';
-    document.getElementById('fCategory').value = t.category || 'ИП / ФССП'; document.getElementById('fLfo').value = t.lfo || '';
-    document.getElementById('fCaseNum').value = t.caseNum || ''; document.getElementById('fDebtor').value = t.debtor || '';
-    document.getElementById('fOrgan').value = t.organ || ''; document.getElementById('fDeadline').value = t.deadline || '';
-    document.getElementById('fCourtTime').value = t.courtTime || '10:00'; document.getElementById('fDesc').value = t.desc || '';
-    document.getElementById('fLink').value = t.link || ''; tempAttachments = JSON.parse(JSON.stringify(t.attachments || []));
+    document.getElementById('fId').value = t.id;
+    document.getElementById('fStatus').value = t.status || 'work';
+    document.getElementById('fCategory').value = t.category || 'ИП / ФССП';
+    document.getElementById('fLfo').value = t.lfo || '';
+    document.getElementById('fCaseNum').value = t.caseNum || '';
+    document.getElementById('fDebtor').value = t.debtor || '';
+    document.getElementById('fOrgan').value = t.organ || '';
+    document.getElementById('fDeadline').value = t.deadline || '';
+    document.getElementById('fCourtTime').value = t.courtTime || '10:00';
+    document.getElementById('fDesc').value = t.desc || '';
+    document.getElementById('fLink').value = t.link || '';
+    tempAttachments = JSON.parse(JSON.stringify(t.attachments || []));
   } else {
     document.getElementById('modalTitle').textContent = 'Новое дело';
-    document.getElementById('fId').value = ''; document.getElementById('fStatus').value = 'work';
-    document.getElementById('fCategory').value = 'ИП / ФССП'; document.getElementById('fLfo').value = '';
-    document.getElementById('fCaseNum').value = ''; document.getElementById('fDebtor').value = ''; document.getElementById('fOrgan').value = '';
-    const d = new Date(); d.setDate(d.getDate() + 45); document.getElementById('fDeadline').value = d.toISOString().slice(0, 10);
-    document.getElementById('fCourtTime').value = '10:00'; document.getElementById('fDesc').value = ''; document.getElementById('fLink').value = '';
+    document.getElementById('fId').value = '';
+    document.getElementById('fStatus').value = 'work';
+    document.getElementById('fCategory').value = 'ИП / ФССП';
+    document.getElementById('fLfo').value = '';
+    document.getElementById('fCaseNum').value = '';
+    document.getElementById('fDebtor').value = '';
+    document.getElementById('fOrgan').value = '';
+    var d = new Date();
+    d.setDate(d.getDate() + 45);
+    document.getElementById('fDeadline').value = d.toISOString().slice(0, 10);
+    document.getElementById('fCourtTime').value = '10:00';
+    document.getElementById('fDesc').value = '';
+    document.getElementById('fLink').value = '';
   }
-  renderEditAttachments(); document.getElementById('modalBg').classList.add('open');
+  renderEditAttachments();
+  document.getElementById('modalBg').classList.add('open');
 }
 
 function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
-function addDaysToInput(days) { const inp = document.getElementById('fDeadline'); const base = inp.value ? new Date(inp.value + 'T00:00:00') : new Date(); base.setDate(base.getDate() + days); inp.value = base.toISOString().slice(0, 10); }
-function handleFileAttach(e) { Array.from(e.target.files || []).forEach(file => { const r = new FileReader(); r.onload = (ev) => { tempAttachments.push({ name: file.name, type: file.type, dataUrl: ev.target.result }); renderEditAttachments(); }; r.readAsDataURL(file); }); }
-function renderEditAttachments() { document.getElementById('attEditList').innerHTML = tempAttachments.map((att, idx) => `<div class="att-edit-item"><span>📎 ${escapeHtml(att.name)}</span><button type="button" class="btn-sm btn-del" onclick="tempAttachments.splice(${idx},1);renderEditAttachments()">✕</button></div>`).join(''); }
 
-async function saveTask() {
-  const id = document.getElementById('fId').value || ('case_' + Date.now());
-  const existing = tasks.find(x => x.id === id); const logs = existing ? [...(existing.logs || [])] : [];
-  const newLogText = document.getElementById('fNewLog').value.trim();
-  if (newLogText) logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: newLogText });
-  await dbPut({ id, status: document.getElementById('fStatus').value, category: document.getElementById('fCategory').value, lfo: document.getElementById('fLfo').value.trim() || 'Без ЛФО', caseNum: document.getElementById('fCaseNum').value.trim(), debtor: document.getElementById('fDebtor').value.trim() || 'Без названия', organ: document.getElementById('fOrgan').value.trim(), deadline: document.getElementById('fDeadline').value, courtTime: document.getElementById('fCourtTime').value, desc: document.getElementById('fDesc').value.trim(), link: document.getElementById('fLink').value.trim(), logs, attachments: tempAttachments, createdAt: existing ? existing.createdAt : Date.now() });
-  closeModal(); await loadAllTasks(); showToast('Дело сохранено');
+function addDaysToInput(days) {
+  var inp = document.getElementById('fDeadline');
+  var base = inp.value ? new Date(inp.value + 'T00:00:00') : new Date();
+  base.setDate(base.getDate() + days);
+  inp.value = base.toISOString().slice(0, 10);
 }
 
-async function extendTask(id, days) { const t = tasks.find(x => x.id === id); if (!t) return; const base = t.deadline ? new Date(t.deadline + 'T00:00:00') : new Date(); const today = new Date(); today.setHours(0, 0, 0, 0); const start = base < today ? today : base; start.setDate(start.getDate() + days); t.deadline = start.toISOString().slice(0, 10); if (t.status === 'unassigned') t.status = 'work'; t.logs = t.logs || []; t.logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: `Срок продлён на +${days} дн. (до ${formatDateRu(t.deadline)})` }); await dbPut(t); await loadAllTasks(); showToast(`Продлено на +${days} дн.`); }
-async function toggleDone(id) { const t = tasks.find(x => x.id === id); if (!t) return; t.status = t.status === 'done' ? 'work' : 'done'; await dbPut(t); await loadAllTasks(); showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу'); }
-async function removeTask(id) { if (!confirm('Удалить это дело?')) return; await dbDelete(id); await loadAllTasks(); showToast('Удалено'); }
-function copyText(txt) { if (navigator.clipboard) navigator.clipboard.writeText(txt); showToast('Скопировано: ' + txt); }
+function handleFileAttach(e) {
+  var files = e.target.files || [];
+  for (var i = 0; i < files.length; i++) {
+    (function(file) {
+      var r = new FileReader();
+      r.onload = function(ev) {
+        tempAttachments.push({ name: file.name, type: file.type, dataUrl: ev.target.result });
+        renderEditAttachments();
+      };
+      r.readAsDataURL(file);
+    })(files[i]);
+  }
+}
+
+function removeTempAtt(idx) {
+  tempAttachments.splice(idx, 1);
+  renderEditAttachments();
+}
+
+function renderEditAttachments() {
+  var html = '';
+  for (var i = 0; i < tempAttachments.length; i++) {
+    html += '<div class="att-edit-item"><span>📎 ' + escapeHtml(tempAttachments[i].name) + '</span>' +
+      '<button type="button" class="btn-sm btn-del" onclick="removeTempAtt(' + i + ')">✕</button></div>';
+  }
+  document.getElementById('attEditList').innerHTML = html;
+}
+
+function saveTask() {
+  var id = document.getElementById('fId').value || ('case_' + Date.now());
+  var existing = findTaskById(id);
+  var logs = (existing && existing.logs) ? existing.logs.slice() : [];
+  var newLogText = document.getElementById('fNewLog').value.trim();
+  if (newLogText) {
+    logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: newLogText });
+  }
+  var item = {
+    id: id,
+    status: document.getElementById('fStatus').value,
+    category: document.getElementById('fCategory').value,
+    lfo: document.getElementById('fLfo').value.trim() || 'Без ЛФО',
+    caseNum: document.getElementById('fCaseNum').value.trim(),
+    debtor: document.getElementById('fDebtor').value.trim() || 'Без названия',
+    organ: document.getElementById('fOrgan').value.trim(),
+    deadline: document.getElementById('fDeadline').value,
+    courtTime: document.getElementById('fCourtTime').value,
+    desc: document.getElementById('fDesc').value.trim(),
+    link: document.getElementById('fLink').value.trim(),
+    logs: logs,
+    attachments: tempAttachments,
+    createdAt: existing ? existing.createdAt : Date.now()
+  };
+  dbPut(item).then(function() {
+    closeModal();
+    return loadAllTasks();
+  }).then(function() {
+    showToast('Дело сохранено');
+  });
+}
+
+function extendTask(id, days) {
+  var t = findTaskById(id);
+  if (!t) return;
+  var base = t.deadline ? new Date(t.deadline + 'T00:00:00') : new Date();
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var start = base < today ? today : base;
+  start.setDate(start.getDate() + days);
+  t.deadline = start.toISOString().slice(0, 10);
+  if (t.status === 'unassigned') t.status = 'work';
+  t.logs = t.logs || [];
+  t.logs.push({
+    date: formatDateRu(new Date().toISOString().slice(0, 10)),
+    text: 'Срок продлён на +' + days + ' дн. (до ' + formatDateRu(t.deadline) + ')'
+  });
+  dbPut(t).then(loadAllTasks).then(function() {
+    showToast('Продлено на +' + days + ' дн.');
+  });
+}
+
+function toggleDone(id) {
+  var t = findTaskById(id);
+  if (!t) return;
+  t.status = (t.status === 'done') ? 'work' : 'done';
+  dbPut(t).then(loadAllTasks).then(function() {
+    showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу');
+  });
+}
+
+function removeTask(id) {
+  if (!confirm('Удалить это дело?')) return;
+  dbDelete(id).then(loadAllTasks).then(function() {
+    showToast('Удалено');
+  });
+}
+
+function copyText(txt) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt);
+  }
+  showToast('Скопировано: ' + txt);
+}
+
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeJs(s) {
+  return String(s || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'");
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  initDB().catch(function() { showToast('Ошибка БД'); });
+});
+</script>
+</body>
+</html>
