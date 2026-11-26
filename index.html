@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Планировщик юриста v2.0 (Облако)</title>
+<title>Планировщик юриста v2.1 (Яндекс Облако)</title>
 <style>
   :root {
     --primary: #1e3a8a; --primary-light: #eff6ff; --accent: #2563eb;
@@ -134,10 +134,10 @@
 <div id="authScreen" class="auth-screen">
   <div class="auth-box">
     <h2>⚖️ Планировщик юриста</h2>
-    <div class="auth-sub">Облачная синхронизация ПК ↔ Телефон</div>
+    <div class="auth-sub">Яндекс Облако • Синхронизация ПК ↔ Телефон</div>
     <div class="field">
-      <label>Email (логин)</label>
-      <input type="email" id="authEmail" placeholder="lawyer@example.com">
+      <label>Логин (Email)</label>
+      <input type="text" id="authEmail" placeholder="i.roganov.bip@gmail.com">
     </div>
     <div class="field">
       <label>Пароль</label>
@@ -151,7 +151,7 @@
 <div id="appWrap" style="display:none;">
   <header>
     <div class="header-top">
-      <h1>⚖️ Планировщик <span class="ver-tag">v2.0 Облако</span></h1>
+      <h1>⚖️ Планировщик <span class="ver-tag">v2.1 Я.Облако</span></h1>
       <div class="hdr-btns">
         <button type="button" class="btn-hdr" onclick="syncCloud(true)">🔄 Синхр.</button>
         <button type="button" class="btn-hdr" onclick="doLogout()">Выход</button>
@@ -261,7 +261,7 @@
       <input type="text" id="fNewLog" placeholder="Напр. Отправлен запрос приставу через ГУ">
     </div>
     <div class="field">
-      <label>Прикрепить фото или PDF (до 2 МБ для облака)</label>
+      <label>Прикрепить фото или PDF (до 2 МБ)</label>
       <input type="file" id="fAttInput" accept="image/*,.pdf" multiple onchange="handleFileAttach(event)">
       <div id="attEditList" class="att-edit-list"></div>
     </div>
@@ -294,27 +294,26 @@
 
 <div id="toast" class="toast"></div>
 <script>
-var SB_URL = 'https://supabase.co';
-var SB_KEY = 'sb_publishable_wnDdqRzx1xlgyZ41i7pqcw_1FswFVL0';
-var SESSION_KEY = 'sb_lawyer_session_v2';
-var CACHE_KEY = 'sb_lawyer_cache_v2';
+var API_URL = 'https://yandexcloud.net';
+var AUTH_KEY = 'yc_lawyer_auth_v2';
+var CACHE_KEY = 'yc_lawyer_cache_v2';
 
-var session = null;
+var creds = null;
 var tasks = [];
 var currentFilter = 'all';
 var tempAttachments = [];
 
-function loadSession() {
+function loadCreds() {
   try {
-    var raw = localStorage.getItem(SESSION_KEY);
-    if (raw) session = JSON.parse(raw);
-  } catch (e) { session = null; }
+    var raw = localStorage.getItem(AUTH_KEY);
+    if (raw) creds = JSON.parse(raw);
+  } catch (e) { creds = null; }
 }
 
-function saveSession(s) {
-  session = s;
-  if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-  else localStorage.removeItem(SESSION_KEY);
+function saveCreds(c) {
+  creds = c;
+  if (c) localStorage.setItem(AUTH_KEY, JSON.stringify(c));
+  else localStorage.removeItem(AUTH_KEY);
 }
 
 function loadCache() {
@@ -328,172 +327,87 @@ function saveCache() {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(tasks)); } catch (e) {}
 }
 
-function sbHeaders(extra) {
-  var h = { 'apikey': SB_KEY, 'Content-Type': 'application/json' };
-  if (session && session.access_token) h['Authorization'] = 'Bearer ' + session.access_token;
-  if (extra) { for (var k in extra) h[k] = extra[k]; }
-  return h;
-}
-
-function refreshAuthToken() {
-  if (!session || !session.refresh_token) return Promise.reject();
-  return fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+function apiCall(payload) {
+  return fetch(API_URL, {
     method: 'POST',
-    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: session.refresh_token })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   }).then(function(r) {
-    if (!r.ok) throw new Error('Сессия истекла');
-    return r.json();
-  }).then(function(data) {
-    saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user });
-  });
-}
-
-function sbFetch(path, opts, retried) {
-  opts = opts || {};
-  opts.headers = sbHeaders(opts.headers);
-  return fetch(SB_URL + path, opts).then(function(res) {
-    if (res.status === 401 && !retried) {
-      return refreshAuthToken().then(function() { return sbFetch(path, opts, true); });
-    }
-    return res;
+    return r.json().then(function(data) {
+      if (!r.ok) throw new Error(data.error || ('Ошибка сервера ' + r.status));
+      return data;
+    });
   });
 }
 
 function doLogin() {
-  var email = document.getElementById('authEmail').value.trim();
+  var login = document.getElementById('authEmail').value.trim();
   var password = document.getElementById('authPass').value;
   var errEl = document.getElementById('authErr');
   var btn = document.getElementById('btnLogin');
   errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'Введите Email и пароль'; return; }
+  if (!login || !password) { errEl.textContent = 'Введите логин и пароль'; return; }
   btn.disabled = true;
   btn.textContent = 'Вход...';
 
-  fetch(SB_URL + '/auth/v1/token?grant_type=password', {
-    method: 'POST',
-    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, password: password })
-  }).then(function(r) {
-    return r.json().then(function(data) { return { ok: r.ok, data: data }; });
-  }).then(function(res) {
-    btn.disabled = false;
-    btn.textContent = 'Войти в систему';
-    if (!res.ok) {
-      errEl.textContent = res.data.error_description || res.data.msg || 'Неверный логин или пароль';
-      return;
-    }
-    saveSession({ access_token: res.data.access_token, refresh_token: res.data.refresh_token, user: res.data.user });
-    showApp();
-  }).catch(function() {
-    btn.disabled = false;
-    btn.textContent = 'Войти в систему';
-    errEl.textContent = 'Нет подключения к интернету';
-  });
+  apiCall({ action: 'get', login: login, password: password })
+    .then(function(rows) {
+      btn.disabled = false;
+      btn.textContent = 'Войти в систему';
+      saveCreds({ login: login, password: password });
+      tasks = Array.isArray(rows) ? rows : [];
+      saveCache();
+      showApp(false);
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Войти в систему';
+      errEl.textContent = err.message || 'Ошибка подключения';
+    });
 }
 
 function doLogout() {
   if (!confirm('Выйти из аккаунта?')) return;
-  saveSession(null);
+  saveCreds(null);
   document.getElementById('appWrap').style.display = 'none';
   document.getElementById('authScreen').style.display = 'flex';
 }
-function showApp() {
+
+function showApp(needSync) {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appWrap').style.display = 'block';
   loadCache();
   updateLfoLists();
   render();
-  syncCloud(false);
-}
-
-function mapFromDb(row) {
-  return {
-    id: row.id,
-    status: row.status || 'work',
-    category: row.category || 'ИП / ФССП',
-    lfo: row.lfo || 'Без ЛФО',
-    caseNum: row.case_num || '',
-    debtor: row.debtor || 'Без названия',
-    organ: row.organ || '',
-    deadline: row.deadline || '',
-    courtTime: row.court_time || '10:00',
-    desc: row.description || '',
-    link: row.link || '',
-    logs: row.logs || [],
-    attachments: row.attachments || [],
-    createdAt: row.created_at || 0
-  };
-}
-
-function mapToDb(item) {
-  return {
-    id: item.id,
-    user_id: session && session.user ? session.user.id : undefined,
-    status: item.status,
-    category: item.category,
-    lfo: item.lfo,
-    case_num: item.caseNum,
-    debtor: item.debtor,
-    organ: item.organ,
-    deadline: item.deadline,
-    court_time: item.courtTime,
-    description: item.desc,
-    link: item.link,
-    logs: item.logs || [],
-    attachments: item.attachments || [],
-    created_at: item.createdAt || Date.now()
-  };
+  if (needSync) syncCloud(false);
 }
 
 function syncCloud(manual) {
-  if (!session) return;
+  if (!creds) return;
   if (manual) showToast('Синхронизация...');
-  sbFetch('/rest/v1/cases?select=*&order=created_at.desc', { method: 'GET' })
-    .then(function(r) {
-      if (!r.ok) throw new Error('Ошибка сервера ' + r.status);
-      return r.json();
-    })
+  apiCall({ action: 'get', login: creds.login, password: creds.password })
     .then(function(rows) {
-      tasks = [];
-      for (var i = 0; i < rows.length; i++) tasks.push(mapFromDb(rows[i]));
+      tasks = Array.isArray(rows) ? rows : [];
       saveCache();
       updateLfoLists();
       render();
-      if (manual) showToast('Обновлено из облака (' + tasks.length + ')');
+      if (manual) showToast('Синхронизировано (' + tasks.length + ')');
     })
     .catch(function(err) {
-      if (manual) showToast('Офлайн-режим: ' + err.message);
+      if (manual) showToast('Офлайн: ' + err.message);
     });
 }
 
-function cloudUpsert(item) {
-  var found = false;
-  for (var i = 0; i < tasks.length; i++) {
-    if (tasks[i].id === item.id) { tasks[i] = item; found = true; break; }
-  }
-  if (!found) tasks.unshift(item);
+function pushTasksToCloud() {
   saveCache();
   updateLfoLists();
   render();
-
-  return sbFetch('/rest/v1/cases', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify(mapToDb(item))
-  }).then(function(r) {
-    if (!r.ok) throw new Error('Ошибка сохранения в облако');
-  });
-}
-
-function cloudDelete(id) {
-  tasks = tasks.filter(function(t) { return t.id !== id; });
-  saveCache();
-  updateLfoLists();
-  render();
-
-  return sbFetch('/rest/v1/cases?id=eq.' + encodeURIComponent(id), {
-    method: 'DELETE'
+  if (!creds) return Promise.resolve();
+  return apiCall({
+    action: 'save',
+    login: creds.login,
+    password: creds.password,
+    tasks: tasks
   });
 }
 function getDaysDiff(dateStr) {
@@ -821,7 +735,7 @@ function handleFileAttach(e) {
   var files = e.target.files || [];
   for (var i = 0; i < files.length; i++) {
     (function(file) {
-      if (file.size > 2500000) { showToast('Файл больше 2.5 МБ: ' + file.name); return; }
+      if (file.size > 2000000) { showToast('Файл больше 2 МБ: ' + file.name); return; }
       var r = new FileReader();
       r.onload = function(ev) {
         tempAttachments.push({ name: file.name, type: file.type, dataUrl: ev.target.result });
@@ -868,11 +782,18 @@ function saveTask() {
     attachments: tempAttachments,
     createdAt: existing ? existing.createdAt : Date.now()
   };
+
+  var found = false;
+  for (var i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === id) { tasks[i] = item; found = true; break; }
+  }
+  if (!found) tasks.unshift(item);
+
   closeModal();
-  cloudUpsert(item).then(function() {
-    showToast('Сохранено в облаке');
+  pushTasksToCloud().then(function() {
+    showToast('Сохранено в Яндекс Облако');
   }).catch(function(err) {
-    showToast(err.message);
+    showToast('Ошибка облака: ' + err.message);
   });
 }
 
@@ -887,19 +808,20 @@ function extendTask(id, days) {
   if (t.status === 'unassigned') t.status = 'work';
   t.logs = t.logs || [];
   t.logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: 'Срок продлён на +' + days + ' дн. (до ' + formatDateRu(t.deadline) + ')' });
-  cloudUpsert(t).then(function() { showToast('Продлено на +' + days + ' дн.'); });
+  pushTasksToCloud().then(function() { showToast('Продлено на +' + days + ' дн.'); });
 }
 
 function toggleDone(id) {
   var t = findTaskById(id);
   if (!t) return;
   t.status = (t.status === 'done') ? 'work' : 'done';
-  cloudUpsert(t).then(function() { showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу'); });
+  pushTasksToCloud().then(function() { showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу'); });
 }
 
 function removeTask(id) {
   if (!confirm('Удалить это дело?')) return;
-  cloudDelete(id).then(function() { showToast('Удалено из облака'); });
+  tasks = tasks.filter(function(t) { return t.id !== id; });
+  pushTasksToCloud().then(function() { showToast('Удалено из облака'); });
 }
 
 function copyText(txt) {
@@ -923,8 +845,8 @@ function escapeJs(s) {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
-  loadSession();
-  if (session && session.access_token) showApp();
+  loadCreds();
+  if (creds && creds.login && creds.password) showApp(true);
 });
 </script>
 </body>
