@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Планировщик юриста v2.1 (Яндекс Облако)</title>
+<title>Планировщик юриста v2.2 (Яндекс Облако)</title>
 <style>
   :root {
     --primary: #1e3a8a; --primary-light: #eff6ff; --accent: #2563eb;
@@ -151,7 +151,7 @@
 <div id="appWrap" style="display:none;">
   <header>
     <div class="header-top">
-      <h1>⚖️ Планировщик <span class="ver-tag">v2.1 Я.Облако</span></h1>
+      <h1>⚖️ Планировщик <span class="ver-tag">v2.2 Я.Облако</span></h1>
       <div class="hdr-btns">
         <button type="button" class="btn-hdr" onclick="syncCloud(true)">🔄 Синхр.</button>
         <button type="button" class="btn-hdr" onclick="doLogout()">Выход</button>
@@ -294,7 +294,7 @@
 
 <div id="toast" class="toast"></div>
 <script>
-var API_URL = 'https://yandexcloud.net';
+var API_URL = 'https://functions.yandexcloud.net/d4evinqca7b4om7235re';
 var AUTH_KEY = 'yc_lawyer_auth_v2';
 var CACHE_KEY = 'yc_lawyer_cache_v2';
 
@@ -330,10 +330,11 @@ function saveCache() {
 function apiCall(payload) {
   return fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }).then(function(r) {
-    return r.json().then(function(data) {
+    return r.text().then(function(txt) {
+      var data = {};
+      try { data = txt ? JSON.parse(txt) : {}; } catch (e) {}
       if (!r.ok) throw new Error(data.error || ('Ошибка сервера ' + r.status));
       return data;
     });
@@ -682,7 +683,6 @@ function openAttachment(taskId, idx) {
   }
   document.getElementById('lightbox').classList.add('open');
 }
-
 function openModal(id) {
   tempAttachments = [];
   document.getElementById('fNewLog').value = '';
