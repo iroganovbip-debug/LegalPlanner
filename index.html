@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Планировщик юриста v1.3</title>
+<title>Планировщик юриста v2.0 (Облако)</title>
 <style>
   :root {
     --primary: #1e3a8a; --primary-light: #eff6ff; --accent: #2563eb;
@@ -19,6 +19,16 @@
     background: var(--bg); color: var(--text);
   }
   body { padding-bottom: 92px; }
+  .auth-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 16px; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  }
+  .auth-box {
+    background: #fff; width: 100%; max-width: 380px; border-radius: 16px;
+    padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  }
+  .auth-box h2 { margin: 0 0 6px; font-size: 20px; color: var(--primary); text-align: center; }
+  .auth-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 18px; }
   header {
     background: var(--primary); color: #fff;
     padding: calc(10px + env(safe-area-inset-top)) 12px 12px;
@@ -26,24 +36,29 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.15); width: 100%;
   }
   .header-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-  h1 { margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  h1 { margin: 0; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
   .ver-tag { font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 5px; font-weight: 600; }
+  .hdr-btns { display: flex; gap: 6px; }
+  .btn-hdr {
+    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28);
+    color: #fff; padding: 5px 9px; border-radius: 7px; font-size: 11px; font-weight: 600; cursor: pointer;
+  }
   .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 10px; width: 100%; }
   .stat-box { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 5px 2px; text-align: center; cursor: pointer; min-width: 0; }
   .stat-num { font-size: 15px; font-weight: 700; display: block; line-height: 1.2; }
   .stat-lbl { font-size: 9px; opacity: 0.92; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .controls { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 8px; width: 100%; }
-  .search-row { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+  .controls { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 820px; margin: 0 auto; }
+  .search-row { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; }
   .search-input, .lfo-select {
-    width: 100%; padding: 9px 11px; border: 1px solid var(--border);
+    flex: 1; min-width: 200px; padding: 9px 11px; border: 1px solid var(--border);
     border-radius: 10px; font-size: 14px; background: #fff; color: var(--text);
   }
-  .lfo-select { font-weight: 600; color: var(--primary); font-size: 13px; }
+  .lfo-select { font-weight: 600; color: var(--primary); font-size: 13px; max-width: 260px; }
   .filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; width: 100%; }
   .filters::-webkit-scrollbar { display: none; }
   .chip { padding: 6px 11px; border-radius: 20px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; cursor: pointer; flex-shrink: 0; }
   .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .list { padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .list { padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 820px; margin: 0 auto; }
   .card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.04); width: 100%; word-wrap: break-word; cursor: pointer; }
   .card.overdue { border-left-color: var(--danger); background: #fffafa; }
   .card.urgent { border-left-color: var(--warn); }
@@ -82,10 +97,11 @@
   .btn-sm { padding: 6px 9px; border-radius: 8px; border: 1px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
   .btn-done { color: var(--ok); border-color: #bbf7d0; background: var(--ok-bg); }
   .btn-del { color: var(--danger); border-color: #fecaca; background: var(--danger-bg); }
-  .fab { position: fixed; right: 16px; bottom: 20px; background: var(--primary); color: #fff; border: none; border-radius: 28px; padding: 14px 20px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 14px rgba(30,58,138,0.42); cursor: pointer; z-index: 40; }
+  .fab { position: fixed; right: 20px; bottom: 22px; background: var(--primary); color: #fff; border: none; border-radius: 28px; padding: 14px 22px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 14px rgba(30,58,138,0.42); cursor: pointer; z-index: 40; }
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.58); z-index: 50; align-items: flex-end; justify-content: center; }
   .modal-bg.open { display: flex; }
-  .modal { background: #fff; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px; }
+  .modal { background: #fff; width: 100%; max-width: 580px; max-height: 92vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px; }
+  @media (min-width: 640px) { .modal-bg { align-items: center; } .modal { border-radius: 16px; } }
   .modal-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
   .modal-hdr h2 { margin: 0; font-size: 17px; }
   .close-btn { background: none; border: none; font-size: 24px; color: var(--muted); cursor: pointer; line-height: 1; }
@@ -114,52 +130,117 @@
 </style>
 </head>
 <body>
-<header>
-  <div class="header-top">
-    <h1>⚖️ Планировщик юриста <span class="ver-tag">v1.3</span></h1>
-  </div>
-  <div class="stats">
-    <div class="stat-box" onclick="quickTab('all')"><span class="stat-num" id="stTotal">0</span><span class="stat-lbl">В работе</span></div>
-    <div class="stat-box" onclick="quickTab('court')"><span class="stat-num" id="stCourt">0</span><span class="stat-lbl">Суды</span></div>
-    <div class="stat-box" onclick="quickTab('unassigned')"><span class="stat-num" id="stWait">0</span><span class="stat-lbl">Ждут дату</span></div>
-    <div class="stat-box" onclick="quickTab('urgent')"><span class="stat-num" id="stUrgent">0</span><span class="stat-lbl">Срочно ≤3д</span></div>
-    <div class="stat-box" onclick="quickTab('overdue')"><span class="stat-num" id="stOver">0</span><span class="stat-lbl">Просрочено</span></div>
-  </div>
-</header>
-<div class="controls">
-  <div class="search-row">
-    <input type="text" id="searchInput" class="search-input" placeholder="Поиск: должник, № дела/ИП, суд..." oninput="render()">
-    <select id="lfoFilter" class="lfo-select" onchange="render()"><option value="all">Все ЛФО (0)</option></select>
-  </div>
-  <div class="filters">
-    <button type="button" class="chip active" data-f="all" onclick="setFilter('all', this)">Все активные</button>
-    <button type="button" class="chip" data-f="overdue" onclick="setFilter('overdue', this)">🔥 Просрочено</button>
-    <button type="button" class="chip" data-f="urgent" onclick="setFilter('urgent', this)">⏰ Срочно</button>
-    <button type="button" class="chip" data-f="court" onclick="setFilter('court', this)">⚖️ Суды</button>
-    <button type="button" class="chip" data-f="unassigned" onclick="setFilter('unassigned', this)">⏳ Без даты</button>
-    <button type="button" class="chip" data-f="done" onclick="setFilter('done', this)">✅ Завершённые</button>
+
+<div id="authScreen" class="auth-screen">
+  <div class="auth-box">
+    <h2>⚖️ Планировщик юриста</h2>
+    <div class="auth-sub">Облачная синхронизация ПК ↔ Телефон</div>
+    <div class="field">
+      <label>Email (логин)</label>
+      <input type="email" id="authEmail" placeholder="lawyer@example.com">
+    </div>
+    <div class="field">
+      <label>Пароль</label>
+      <input type="password" id="authPass" placeholder="••••••••">
+    </div>
+    <button type="button" class="btn-save" id="btnLogin" onclick="doLogin()">Войти в систему</button>
+    <div id="authErr" style="color:var(--danger); font-size:12px; margin-top:10px; text-align:center;"></div>
   </div>
 </div>
-<div id="taskList" class="list"></div>
-<button class="fab" type="button" onclick="openModal()">+ Новое дело</button>
 
+<div id="appWrap" style="display:none;">
+  <header>
+    <div class="header-top">
+      <h1>⚖️ Планировщик <span class="ver-tag">v2.0 Облако</span></h1>
+      <div class="hdr-btns">
+        <button type="button" class="btn-hdr" onclick="syncCloud(true)">🔄 Синхр.</button>
+        <button type="button" class="btn-hdr" onclick="doLogout()">Выход</button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat-box" onclick="quickTab('all')"><span class="stat-num" id="stTotal">0</span><span class="stat-lbl">В работе</span></div>
+      <div class="stat-box" onclick="quickTab('court')"><span class="stat-num" id="stCourt">0</span><span class="stat-lbl">Суды</span></div>
+      <div class="stat-box" onclick="quickTab('unassigned')"><span class="stat-num" id="stWait">0</span><span class="stat-lbl">Ждут дату</span></div>
+      <div class="stat-box" onclick="quickTab('urgent')"><span class="stat-num" id="stUrgent">0</span><span class="stat-lbl">Срочно ≤3д</span></div>
+      <div class="stat-box" onclick="quickTab('overdue')"><span class="stat-num" id="stOver">0</span><span class="stat-lbl">Просрочено</span></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="search-row">
+      <input type="text" id="searchInput" class="search-input" placeholder="Поиск: должник, № дела/ИП, суд..." oninput="render()">
+      <select id="lfoFilter" class="lfo-select" onchange="render()"><option value="all">Все ЛФО (0)</option></select>
+    </div>
+    <div class="filters">
+      <button type="button" class="chip active" data-f="all" onclick="setFilter('all', this)">Все активные</button>
+      <button type="button" class="chip" data-f="overdue" onclick="setFilter('overdue', this)">🔥 Просрочено</button>
+      <button type="button" class="chip" data-f="urgent" onclick="setFilter('urgent', this)">⏰ Срочно</button>
+      <button type="button" class="chip" data-f="court" onclick="setFilter('court', this)">⚖️ Суды</button>
+      <button type="button" class="chip" data-f="unassigned" onclick="setFilter('unassigned', this)">⏳ Без даты</button>
+      <button type="button" class="chip" data-f="done" onclick="setFilter('done', this)">✅ Завершённые</button>
+    </div>
+  </div>
+
+  <div id="taskList" class="list"></div>
+  <button class="fab" type="button" onclick="openModal()">+ Новое дело</button>
+</div>
 <div id="modalBg" class="modal-bg" onclick="if(event.target===this) closeModal()">
   <div class="modal">
-    <div class="modal-hdr"><h2 id="modalTitle">Новое дело / задача</h2><button class="close-btn" type="button" onclick="closeModal()">&times;</button></div>
+    <div class="modal-hdr">
+      <h2 id="modalTitle">Новое дело / задача</h2>
+      <button class="close-btn" type="button" onclick="closeModal()">&times;</button>
+    </div>
     <input type="hidden" id="fId">
     <div class="field-row">
-      <div class="field"><label>Статус</label><select id="fStatus"><option value="work">В работе (ИП / запрос)</option><option value="court">Судебное заседание</option><option value="unassigned">Не назначено (ждём дату)</option><option value="done">Завершено</option></select></div>
-      <div class="field"><label>Категория</label><select id="fCategory"><option value="ИП / ФССП">ИП / ФССП</option><option value="Жалоба ФССП">Жалоба ФССП (45 дн.)</option><option value="Суд / Иск">Суд / Иск</option><option value="Банкротство">Банкротство</option><option value="ЗНСР / Списание">ЗНСР / Списание</option><option value="Прочее">Прочее</option></select></div>
+      <div class="field">
+        <label>Статус</label>
+        <select id="fStatus">
+          <option value="work">В работе (ИП / запрос)</option>
+          <option value="court">Судебное заседание</option>
+          <option value="unassigned">Не назначено (ждём дату)</option>
+          <option value="done">Завершено</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Категория</label>
+        <select id="fCategory">
+          <option value="ИП / ФССП">ИП / ФССП</option>
+          <option value="Жалоба ФССП">Жалоба ФССП (45 дн.)</option>
+          <option value="Суд / Иск">Суд / Иск</option>
+          <option value="Банкротство">Банкротство</option>
+          <option value="ЗНСР / Списание">ЗНСР / Списание</option>
+          <option value="Прочее">Прочее</option>
+        </select>
+      </div>
     </div>
     <div class="field-row">
-      <div class="field"><label>ЛФО / Взыскатель</label><input type="text" id="fLfo" list="lfoSuggestions" placeholder="Напр. Сбер / ПКБ"><datalist id="lfoSuggestions"></datalist></div>
-      <div class="field"><label>№ дела / № ИП</label><input type="text" id="fCaseNum" placeholder="12345/26/50038-ИП"></div>
+      <div class="field">
+        <label>ЛФО / Взыскатель</label>
+        <input type="text" id="fLfo" list="lfoSuggestions" placeholder="Напр. Сбер / ПКБ">
+        <datalist id="lfoSuggestions"></datalist>
+      </div>
+      <div class="field">
+        <label>№ дела / № ИП</label>
+        <input type="text" id="fCaseNum" placeholder="12345/26/50038-ИП">
+      </div>
     </div>
-    <div class="field"><label>Должник (ФИО / Наименование)</label><input type="text" id="fDebtor" placeholder="Иванов Иван Иванович"></div>
-    <div class="field"><label>Орган (РОСП / Суд)</label><input type="text" id="fOrgan" placeholder="Сергиево-Посадский РОСП / АСМО"></div>
+    <div class="field">
+      <label>Должник (ФИО / Наименование)</label>
+      <input type="text" id="fDebtor" placeholder="Иванов Иван Иванович">
+    </div>
+    <div class="field">
+      <label>Орган (РОСП / Суд)</label>
+      <input type="text" id="fOrgan" placeholder="Сергиево-Посадский РОСП / АСМО">
+    </div>
     <div class="field-row">
-      <div class="field"><label>Контрольная дата / Суд</label><input type="date" id="fDeadline"></div>
-      <div class="field"><label>Время суда (если суд)</label><input type="time" id="fCourtTime" value="10:00"></div>
+      <div class="field">
+        <label>Контрольная дата / Суд</label>
+        <input type="date" id="fDeadline">
+      </div>
+      <div class="field">
+        <label>Время суда (если суд)</label>
+        <input type="time" id="fCourtTime" value="10:00">
+      </div>
     </div>
     <div class="quick-days" style="margin-bottom:10px;">
       <button type="button" class="q-btn" onclick="addDaysToInput(7)">+7 дн.</button>
@@ -167,14 +248,28 @@
       <button type="button" class="q-btn" onclick="addDaysToInput(30)">+30 дн.</button>
       <button type="button" class="q-btn" onclick="addDaysToInput(45)">+45 дн. (жалоба ФССП)</button>
     </div>
-    <div class="field"><label>Суть задачи / Комментарий</label><textarea id="fDesc" rows="3" placeholder="Направлено ходатайство о..."></textarea></div>
-    <div class="field"><label>Ссылка (КАД / Госуслуги / ФССП)</label><input type="url" id="fLink" placeholder="https://arbitr.ru..."></div>
-    <div class="field"><label>Добавить запись в историю действий (необязательно)</label><input type="text" id="fNewLog" placeholder="Напр. Отправлен запрос приставу через ГУ"></div>
-    <div class="field"><label>Прикрепить фото или PDF (хранится в телефоне)</label><input type="file" id="fAttInput" accept="image/*,.pdf" multiple onchange="handleFileAttach(event)"><div id="attEditList" class="att-edit-list"></div></div>
+    <div class="field">
+      <label>Суть задачи / Комментарий</label>
+      <textarea id="fDesc" rows="3" placeholder="Направлено ходатайство о..."></textarea>
+    </div>
+    <div class="field">
+      <label>Ссылка (КАД / Госуслуги / ФССП)</label>
+      <input type="url" id="fLink" placeholder="https://arbitr.ru...">
+    </div>
+    <div class="field">
+      <label>Добавить запись в историю действий (необязательно)</label>
+      <input type="text" id="fNewLog" placeholder="Напр. Отправлен запрос приставу через ГУ">
+    </div>
+    <div class="field">
+      <label>Прикрепить фото или PDF (до 2 МБ для облака)</label>
+      <input type="file" id="fAttInput" accept="image/*,.pdf" multiple onchange="handleFileAttach(event)">
+      <div id="attEditList" class="att-edit-list"></div>
+    </div>
     <button class="btn-save" type="button" onclick="saveTask()">Сохранить дело</button>
     <button class="btn-sec" type="button" onclick="closeModal()">Отмена</button>
   </div>
 </div>
+
 <div id="viewModalBg" class="modal-bg" onclick="if(event.target===this) closeViewModal()">
   <div class="modal">
     <div class="modal-hdr">
@@ -198,60 +293,207 @@
 </div>
 
 <div id="toast" class="toast"></div>
-
 <script>
-var DB_NAME = 'LegalPlannerDB_v1';
-var STORE_NAME = 'cases';
-var db = null;
+var SB_URL = 'https://supabase.co';
+var SB_KEY = 'sb_publishable_wnDdqRzx1xlgyZ41i7pqcw_1FswFVL0';
+var SESSION_KEY = 'sb_lawyer_session_v2';
+var CACHE_KEY = 'sb_lawyer_cache_v2';
+
+var session = null;
 var tasks = [];
 var currentFilter = 'all';
 var tempAttachments = [];
 
-function initDB() {
-  return new Promise(function(resolve, reject) {
-    var req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = function(e) {
-      var database = e.target.result;
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = function(e) {
-      db = e.target.result;
-      loadAllTasks().then(resolve);
-    };
-    req.onerror = function(e) { reject(e); };
+function loadSession() {
+  try {
+    var raw = localStorage.getItem(SESSION_KEY);
+    if (raw) session = JSON.parse(raw);
+  } catch (e) { session = null; }
+}
+
+function saveSession(s) {
+  session = s;
+  if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  else localStorage.removeItem(SESSION_KEY);
+}
+
+function loadCache() {
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    if (raw) tasks = JSON.parse(raw) || [];
+  } catch (e) { tasks = []; }
+}
+
+function saveCache() {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(tasks)); } catch (e) {}
+}
+
+function sbHeaders(extra) {
+  var h = { 'apikey': SB_KEY, 'Content-Type': 'application/json' };
+  if (session && session.access_token) h['Authorization'] = 'Bearer ' + session.access_token;
+  if (extra) { for (var k in extra) h[k] = extra[k]; }
+  return h;
+}
+
+function refreshAuthToken() {
+  if (!session || !session.refresh_token) return Promise.reject();
+  return fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: session.refresh_token })
+  }).then(function(r) {
+    if (!r.ok) throw new Error('Сессия истекла');
+    return r.json();
+  }).then(function(data) {
+    saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user });
   });
 }
 
-function dbPut(item) {
-  return new Promise(function(res, rej) {
-    var tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).put(item);
-    tx.oncomplete = function() { res(); };
-    tx.onerror = function(e) { rej(e); };
+function sbFetch(path, opts, retried) {
+  opts = opts || {};
+  opts.headers = sbHeaders(opts.headers);
+  return fetch(SB_URL + path, opts).then(function(res) {
+    if (res.status === 401 && !retried) {
+      return refreshAuthToken().then(function() { return sbFetch(path, opts, true); });
+    }
+    return res;
   });
 }
 
-function dbDelete(id) {
-  return new Promise(function(res, rej) {
-    var tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).delete(id);
-    tx.oncomplete = function() { res(); };
-    tx.onerror = function(e) { rej(e); };
+function doLogin() {
+  var email = document.getElementById('authEmail').value.trim();
+  var password = document.getElementById('authPass').value;
+  var errEl = document.getElementById('authErr');
+  var btn = document.getElementById('btnLogin');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Введите Email и пароль'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Вход...';
+
+  fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password })
+  }).then(function(r) {
+    return r.json().then(function(data) { return { ok: r.ok, data: data }; });
+  }).then(function(res) {
+    btn.disabled = false;
+    btn.textContent = 'Войти в систему';
+    if (!res.ok) {
+      errEl.textContent = res.data.error_description || res.data.msg || 'Неверный логин или пароль';
+      return;
+    }
+    saveSession({ access_token: res.data.access_token, refresh_token: res.data.refresh_token, user: res.data.user });
+    showApp();
+  }).catch(function() {
+    btn.disabled = false;
+    btn.textContent = 'Войти в систему';
+    errEl.textContent = 'Нет подключения к интернету';
   });
 }
 
-function loadAllTasks() {
-  return new Promise(function(res) {
-    var tx = db.transaction(STORE_NAME, 'readonly');
-    var req = tx.objectStore(STORE_NAME).getAll();
-    req.onsuccess = function() {
-      tasks = req.result || [];
+function doLogout() {
+  if (!confirm('Выйти из аккаунта?')) return;
+  saveSession(null);
+  document.getElementById('appWrap').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+}
+function showApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appWrap').style.display = 'block';
+  loadCache();
+  updateLfoLists();
+  render();
+  syncCloud(false);
+}
+
+function mapFromDb(row) {
+  return {
+    id: row.id,
+    status: row.status || 'work',
+    category: row.category || 'ИП / ФССП',
+    lfo: row.lfo || 'Без ЛФО',
+    caseNum: row.case_num || '',
+    debtor: row.debtor || 'Без названия',
+    organ: row.organ || '',
+    deadline: row.deadline || '',
+    courtTime: row.court_time || '10:00',
+    desc: row.description || '',
+    link: row.link || '',
+    logs: row.logs || [],
+    attachments: row.attachments || [],
+    createdAt: row.created_at || 0
+  };
+}
+
+function mapToDb(item) {
+  return {
+    id: item.id,
+    user_id: session && session.user ? session.user.id : undefined,
+    status: item.status,
+    category: item.category,
+    lfo: item.lfo,
+    case_num: item.caseNum,
+    debtor: item.debtor,
+    organ: item.organ,
+    deadline: item.deadline,
+    court_time: item.courtTime,
+    description: item.desc,
+    link: item.link,
+    logs: item.logs || [],
+    attachments: item.attachments || [],
+    created_at: item.createdAt || Date.now()
+  };
+}
+
+function syncCloud(manual) {
+  if (!session) return;
+  if (manual) showToast('Синхронизация...');
+  sbFetch('/rest/v1/cases?select=*&order=created_at.desc', { method: 'GET' })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Ошибка сервера ' + r.status);
+      return r.json();
+    })
+    .then(function(rows) {
+      tasks = [];
+      for (var i = 0; i < rows.length; i++) tasks.push(mapFromDb(rows[i]));
+      saveCache();
       updateLfoLists();
       render();
-      res();
-    };
+      if (manual) showToast('Обновлено из облака (' + tasks.length + ')');
+    })
+    .catch(function(err) {
+      if (manual) showToast('Офлайн-режим: ' + err.message);
+    });
+}
+
+function cloudUpsert(item) {
+  var found = false;
+  for (var i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === item.id) { tasks[i] = item; found = true; break; }
+  }
+  if (!found) tasks.unshift(item);
+  saveCache();
+  updateLfoLists();
+  render();
+
+  return sbFetch('/rest/v1/cases', {
+    method: 'POST',
+    headers: { 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify(mapToDb(item))
+  }).then(function(r) {
+    if (!r.ok) throw new Error('Ошибка сохранения в облако');
+  });
+}
+
+function cloudDelete(id) {
+  tasks = tasks.filter(function(t) { return t.id !== id; });
+  saveCache();
+  updateLfoLists();
+  render();
+
+  return sbFetch('/rest/v1/cases?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE'
   });
 }
 function getDaysDiff(dateStr) {
@@ -293,25 +535,20 @@ function updateLfoLists() {
 function setFilter(f, btn) {
   currentFilter = f;
   var chips = document.querySelectorAll('.chip');
-  for (var i = 0; i < chips.length; i++) {
-    chips[i].classList.remove('active');
-  }
+  for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
   if (btn) btn.classList.add('active');
   render();
 }
 
 function quickTab(f) {
-  var chip = document.querySelector('.chip[data-f="' + f + '"]');
-  setFilter(f, chip);
+  setFilter(f, document.querySelector('.chip[data-f="' + f + '"]'));
 }
 
 function onCardClick(ev, id) {
   var el = ev.target;
   while (el && el !== ev.currentTarget) {
     var tag = (el.tagName || '').toUpperCase();
-    if (tag === 'BUTTON' || tag === 'A' || el.classList.contains('case-copy') || el.classList.contains('att-chip')) {
-      return;
-    }
+    if (tag === 'BUTTON' || tag === 'A' || el.classList.contains('case-copy') || el.classList.contains('att-chip')) return;
     el = el.parentElement;
   }
   openViewModal(id);
@@ -360,6 +597,7 @@ function render() {
     else if (currentFilter === 'done') keep = (t.status === 'done');
     if (keep) filtered.push(t);
   }
+
   filtered.sort(function(a, b) {
     if (a.status === 'done' && b.status !== 'done') return 1;
     if (b.status === 'done' && a.status !== 'done') return -1;
@@ -379,38 +617,18 @@ function render() {
   for (var m = 0; m < filtered.length; m++) {
     var c = filtered[m];
     var cDiff = (c.status !== 'unassigned' && c.deadline) ? getDaysDiff(c.deadline) : null;
-    var cardClass = 'card';
-    var daysBadge = '';
-    var statusBadge = '';
+    var cardClass = 'card', daysBadge = '', statusBadge = '';
 
-    if (c.status === 'done') {
-      cardClass += ' done';
-      statusBadge = '<span class="badge-status st-done">✅ Завершено</span>';
-    } else if (c.status === 'court') {
-      cardClass += ' court';
-      statusBadge = '<span class="badge-status st-court">⚖️ Суд ' + escapeHtml(c.courtTime || '') + '</span>';
-    } else if (c.status === 'unassigned') {
-      cardClass += ' unassigned';
-      statusBadge = '<span class="badge-status st-wait">⏳ Не назначено</span>';
-      daysBadge = '<span class="badge-days days-wait">Ожидает дату</span>';
-    } else {
-      statusBadge = '<span class="badge-status st-work">' + escapeHtml(c.category || 'В работе') + '</span>';
-    }
+    if (c.status === 'done') { cardClass += ' done'; statusBadge = '<span class="badge-status st-done">✅ Завершено</span>'; }
+    else if (c.status === 'court') { cardClass += ' court'; statusBadge = '<span class="badge-status st-court">⚖️ Суд ' + escapeHtml(c.courtTime || '') + '</span>'; }
+    else if (c.status === 'unassigned') { cardClass += ' unassigned'; statusBadge = '<span class="badge-status st-wait">⏳ Не назначено</span>'; daysBadge = '<span class="badge-days days-wait">Ожидает дату</span>'; }
+    else { statusBadge = '<span class="badge-status st-work">' + escapeHtml(c.category || 'В работе') + '</span>'; }
 
     if (c.status !== 'done' && c.status !== 'unassigned' && cDiff !== null) {
-      if (cDiff < 0) {
-        cardClass += ' overdue';
-        daysBadge = '<span class="badge-days days-over">Просрочено ' + Math.abs(cDiff) + ' дн.</span>';
-      } else if (cDiff === 0) {
-        cardClass += ' urgent';
-        daysBadge = '<span class="badge-days days-warn">СЕГОДНЯ (' + formatDateRu(c.deadline) + ')</span>';
-      } else if (cDiff <= 3) {
-        cardClass += ' urgent';
-        daysBadge = '<span class="badge-days days-warn">Осталось ' + cDiff + ' дн.</span>';
-      } else {
-        var bCls = (c.status === 'court') ? 'days-court' : 'days-ok';
-        daysBadge = '<span class="badge-days ' + bCls + '">Через ' + cDiff + ' дн. (' + formatDateRu(c.deadline) + ')</span>';
-      }
+      if (cDiff < 0) { cardClass += ' overdue'; daysBadge = '<span class="badge-days days-over">Просрочено ' + Math.abs(cDiff) + ' дн.</span>'; }
+      else if (cDiff === 0) { cardClass += ' urgent'; daysBadge = '<span class="badge-days days-warn">СЕГОДНЯ (' + formatDateRu(c.deadline) + ')</span>'; }
+      else if (cDiff <= 3) { cardClass += ' urgent'; daysBadge = '<span class="badge-days days-warn">Осталось ' + cDiff + ' дн.</span>'; }
+      else { daysBadge = '<span class="badge-days ' + (c.status === 'court' ? 'days-court' : 'days-ok') + '">Через ' + cDiff + ' дн. (' + formatDateRu(c.deadline) + ')</span>'; }
     }
 
     var idJs = escapeJs(c.id);
@@ -484,22 +702,18 @@ function openViewModal(id) {
   }
 
   var timePart = (t.status === 'court' && t.courtTime) ? (' в ' + escapeHtml(t.courtTime)) : '';
-  var bodyHtml = '<div class="view-box">' +
+  document.getElementById('vBody').innerHTML = '<div class="view-box">' +
     '<div class="view-lbl">ЛФО / Взыскатель и Категория</div><div class="view-val">' + escapeHtml(t.lfo) + ' • ' + escapeHtml(t.category) + '</div>' +
     '<div class="view-lbl">№ дела / ИП</div><div class="view-val">' + (t.caseNum ? '<span class="case-copy" onclick="copyText(\'' + escapeJs(t.caseNum) + '\')">📋 ' + escapeHtml(t.caseNum) + '</span>' : 'Не указан') + '</div>' +
     '<div class="view-lbl">Орган (Суд / РОСП)</div><div class="view-val">' + escapeHtml(t.organ || 'Не указан') + '</div>' +
     '<div class="view-lbl">Срок / Дата заседания</div><div class="view-val">' + (t.deadline ? formatDateRu(t.deadline) : 'Не назначено') + timePart + '</div>' +
   '</div>' +
   (t.desc ? '<div class="view-lbl">Описание / Суть задачи</div><div class="card-desc" style="margin-bottom:10px;">' + escapeHtml(t.desc) + '</div>' : '') +
-  '<div class="view-lbl">Вложения (нажмите для просмотра / скачивания)</div><div style="margin-bottom:10px;">' + attsHtml + '</div>' +
+  '<div class="view-lbl">Вложения</div><div style="margin-bottom:10px;">' + attsHtml + '</div>' +
   '<div class="view-lbl">История действий</div><div class="log-box" style="margin-bottom:10px;">' + logsHtml + '</div>' +
   (t.link ? '<a class="btn-link" style="width:100%; justify-content:center; padding:10px;" href="' + escapeHtml(t.link) + '" target="_blank">🔗 Открыть внешнюю ссылку</a>' : '');
 
-  document.getElementById('vBody').innerHTML = bodyHtml;
-  document.getElementById('vEditBtn').onclick = function() {
-    closeViewModal();
-    openModal(id);
-  };
+  document.getElementById('vEditBtn').onclick = function() { closeViewModal(); openModal(id); };
   document.getElementById('viewModalBg').classList.add('open');
 }
 
@@ -515,9 +729,7 @@ function dataUrlToBlob(dataUrl) {
   var mime = (colonIdx !== -1 && semiIdx !== -1) ? header.slice(colonIdx + 1, semiIdx) : 'application/octet-stream';
   var raw = atob(base64);
   var arr = new Uint8Array(raw.length);
-  for (var i = 0; i < raw.length; i++) {
-    arr[i] = raw.charCodeAt(i);
-  }
+  for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
   return new Blob([arr], { type: mime });
 }
 
@@ -534,15 +746,10 @@ function shareOrDownloadAtt(taskId, idx) {
     }
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url;
-    a.download = att.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.href = url; a.download = att.name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     showToast('Файл передан на скачивание');
-  } catch (err) {
-    showToast('Ошибка файла: ' + err.message);
-  }
+  } catch (err) { showToast('Ошибка файла: ' + err.message); }
 }
 
 function openAttachment(taskId, idx) {
@@ -557,10 +764,11 @@ function openAttachment(taskId, idx) {
   if (isImg) {
     box.innerHTML = '<div style="text-align:center;"><img class="lb-img" src="' + att.dataUrl + '"><div class="lb-btns"><button type="button" class="btn-save" style="width:auto; padding:9px 16px;" onclick="shareOrDownloadAtt(\'' + idJs + '\', ' + idx + ')">📤 Сохранить / Поделиться</button></div></div>';
   } else {
-    box.innerHTML = '<div class="lb-pdf-card"><div style="font-size:40px; margin-bottom:8px;">📄</div><div style="font-weight:700; margin-bottom:6px; word-break:break-word;">' + escapeHtml(att.name) + '</div><div style="font-size:12px; color:var(--muted);">Откройте PDF в системном просмотрщике или сохраните на телефон.</div><div class="lb-btns"><button type="button" class="btn-save" onclick="shareOrDownloadAtt(\'' + idJs + '\', ' + idx + ')">📤 Открыть / Сохранить PDF</button></div></div>';
+    box.innerHTML = '<div class="lb-pdf-card"><div style="font-size:40px; margin-bottom:8px;">📄</div><div style="font-weight:700; margin-bottom:6px; word-break:break-word;">' + escapeHtml(att.name) + '</div><div style="font-size:12px; color:var(--muted);">Нажмите кнопку ниже, чтобы открыть или сохранить PDF.</div><div class="lb-btns"><button type="button" class="btn-save" onclick="shareOrDownloadAtt(\'' + idJs + '\', ' + idx + ')">📤 Открыть / Сохранить PDF</button></div></div>';
   }
   document.getElementById('lightbox').classList.add('open');
 }
+
 function openModal(id) {
   tempAttachments = [];
   document.getElementById('fNewLog').value = '';
@@ -590,8 +798,7 @@ function openModal(id) {
     document.getElementById('fCaseNum').value = '';
     document.getElementById('fDebtor').value = '';
     document.getElementById('fOrgan').value = '';
-    var d = new Date();
-    d.setDate(d.getDate() + 45);
+    var d = new Date(); d.setDate(d.getDate() + 45);
     document.getElementById('fDeadline').value = d.toISOString().slice(0, 10);
     document.getElementById('fCourtTime').value = '10:00';
     document.getElementById('fDesc').value = '';
@@ -614,6 +821,7 @@ function handleFileAttach(e) {
   var files = e.target.files || [];
   for (var i = 0; i < files.length; i++) {
     (function(file) {
+      if (file.size > 2500000) { showToast('Файл больше 2.5 МБ: ' + file.name); return; }
       var r = new FileReader();
       r.onload = function(ev) {
         tempAttachments.push({ name: file.name, type: file.type, dataUrl: ev.target.result });
@@ -643,9 +851,7 @@ function saveTask() {
   var existing = findTaskById(id);
   var logs = (existing && existing.logs) ? existing.logs.slice() : [];
   var newLogText = document.getElementById('fNewLog').value.trim();
-  if (newLogText) {
-    logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: newLogText });
-  }
+  if (newLogText) logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: newLogText });
   var item = {
     id: id,
     status: document.getElementById('fStatus').value,
@@ -662,11 +868,11 @@ function saveTask() {
     attachments: tempAttachments,
     createdAt: existing ? existing.createdAt : Date.now()
   };
-  dbPut(item).then(function() {
-    closeModal();
-    return loadAllTasks();
-  }).then(function() {
-    showToast('Дело сохранено');
+  closeModal();
+  cloudUpsert(item).then(function() {
+    showToast('Сохранено в облаке');
+  }).catch(function(err) {
+    showToast(err.message);
   });
 }
 
@@ -674,42 +880,30 @@ function extendTask(id, days) {
   var t = findTaskById(id);
   if (!t) return;
   var base = t.deadline ? new Date(t.deadline + 'T00:00:00') : new Date();
-  var today = new Date();
-  today.setHours(0, 0, 0, 0);
+  var today = new Date(); today.setHours(0, 0, 0, 0);
   var start = base < today ? today : base;
   start.setDate(start.getDate() + days);
   t.deadline = start.toISOString().slice(0, 10);
   if (t.status === 'unassigned') t.status = 'work';
   t.logs = t.logs || [];
-  t.logs.push({
-    date: formatDateRu(new Date().toISOString().slice(0, 10)),
-    text: 'Срок продлён на +' + days + ' дн. (до ' + formatDateRu(t.deadline) + ')'
-  });
-  dbPut(t).then(loadAllTasks).then(function() {
-    showToast('Продлено на +' + days + ' дн.');
-  });
+  t.logs.push({ date: formatDateRu(new Date().toISOString().slice(0, 10)), text: 'Срок продлён на +' + days + ' дн. (до ' + formatDateRu(t.deadline) + ')' });
+  cloudUpsert(t).then(function() { showToast('Продлено на +' + days + ' дн.'); });
 }
 
 function toggleDone(id) {
   var t = findTaskById(id);
   if (!t) return;
   t.status = (t.status === 'done') ? 'work' : 'done';
-  dbPut(t).then(loadAllTasks).then(function() {
-    showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу');
-  });
+  cloudUpsert(t).then(function() { showToast(t.status === 'done' ? 'Дело завершено' : 'Возвращено в работу'); });
 }
 
 function removeTask(id) {
   if (!confirm('Удалить это дело?')) return;
-  dbDelete(id).then(loadAllTasks).then(function() {
-    showToast('Удалено');
-  });
+  cloudDelete(id).then(function() { showToast('Удалено из облака'); });
 }
 
 function copyText(txt) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(txt);
-  }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt);
   showToast('Скопировано: ' + txt);
 }
 
@@ -721,21 +915,16 @@ function showToast(msg) {
 }
 
 function escapeHtml(s) {
-  return String(s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function escapeJs(s) {
-  return String(s || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'");
+  return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
 window.addEventListener('DOMContentLoaded', function() {
-  initDB().catch(function() { showToast('Ошибка БД'); });
+  loadSession();
+  if (session && session.access_token) showApp();
 });
 </script>
 </body>
